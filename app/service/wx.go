@@ -1,0 +1,167 @@
+package service
+
+import (
+	"errors"
+	"github.com/eatmoreapple/openwechat"
+	"github.com/robfig/cron"
+	"github.com/sirupsen/logrus"
+	"weixin_LLM/dao"
+	"weixin_LLM/init/config"
+	"weixin_LLM/init/log"
+	"weixin_LLM/service/wx_cron"
+	"weixin_LLM/service/wx_llm"
+)
+
+type WxService struct {
+	*openwechat.Bot
+	*logrus.Logger
+	*wx_llm.WxLLMService
+	*wx_cron.WxCronService
+	wxDao       *dao.WxDao
+	messageDiff []func(*openwechat.Message) error
+	groups      openwechat.Groups
+}
+
+func NewWxService() *WxService {
+	ws := &WxService{
+		Bot:    openwechat.DefaultBot(openwechat.Desktop),
+		Logger: log.Logger,
+		wxDao:  dao.NewWxDao(),
+	}
+	ws.messageDiff = []func(*openwechat.Message) error{ws.textMsg, ws.imgMsg}
+	return ws
+}
+
+func (ws *WxService) textMsg(msg *openwechat.Message) error {
+	if !msg.IsText() {
+		return errors.New("not text")
+	}
+	for _, f := range ws.WxLLMService.GetTextProducer() {
+		if f(msg) == nil {
+			break
+		}
+	}
+	return nil
+}
+
+func (ws *WxService) imgMsg(msg *openwechat.Message) error {
+	if !msg.IsPicture() {
+		return errors.New("not pic")
+	}
+	for _, f := range ws.WxLLMService.GetImgProducer() {
+		if f(msg) == nil {
+			break
+		}
+	}
+	return nil
+}
+func (ws *WxService) InitWxRobot() error {
+	// 注册登陆二维码回调
+	ws.UUIDCallback = openwechat.PrintlnQrcodeUrl
+	// 登陆
+	if err := ws.Login(); err != nil {
+		return err
+	}
+	// 获取登陆的用户
+	self, err := ws.GetCurrentUser()
+	if err != nil {
+		ws.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	friends, err := self.Friends()
+	if err != nil {
+		ws.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	ws.Logln(logrus.InfoLevel, friends)
+	groups, err := self.Groups()
+	if err != nil {
+		ws.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+
+	ws.groups = groups
+	ws.Logln(logrus.InfoLevel, groups)
+
+	//初始化WxLLM
+	ws.WxLLMService = wx_llm.NewWxLLMService(wx_llm.SetSelf(self), wx_llm.SetGroups(groups), wx_llm.SetFriends(friends),
+		wx_llm.SetLog(ws.Logger), wx_llm.SetWxDao(ws.wxDao))
+	//注册消息处理函数
+	ws.MessageHandler = func(msg *openwechat.Message) {
+		user, err := msg.Sender()
+		if err != nil {
+			ws.Logln(logrus.ErrorLevel, err.Error())
+			return
+		}
+		ws.Logln(logrus.InfoLevel, "user:", user.NickName, " msgContent:", msg.Content)
+		//对于不同的消息进行不同的处理
+		for _, f := range ws.messageDiff {
+			if f(msg) == nil {
+				break
+			}
+		}
+	}
+	//初始化WxCron
+	ws.WxCronService = wx_cron.NewWxCronService(wx_cron.SetBot(ws.Bot), wx_cron.SetWxCronGroups(groups), wx_cron.SetWxCronServiceLog(ws.Logger))
+	//初始化,批量更新userID
+	err = ws.ReloadAndUpdateUserName()
+	if err != nil {
+		ws.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	// llm功能
+	ws.OperateMsgWorker()
+	ws.OperateReplyWorker()
+	ws.RegularUpdateUserName()
+	ws.MessageUpdateUserName()
+
+	// cron功能
+	c := cron.New()
+	err = c.AddFunc(config.Config.HolidayTips, ws.SendHolidayTips)
+	if err != nil {
+		return err
+	}
+	err = c.AddFunc(config.Config.NewsTips, ws.SendNews)
+	if err != nil {
+		return err
+	}
+	c.Start()
+	return nil
+}
+
+func (service *WxService) ReloadAndUpdateUserName() error {
+	groups, err := service.getGroupUserNameToUserIDMap()
+	if err != nil {
+		return err
+	}
+	for k, v := range groups {
+		users, err := service.wxDao.GetUsersByGroupName(k)
+		if err != nil {
+			return err
+		}
+		for _, user := range users {
+			user.UserId = v[user.UserName]
+			err = service.wxDao.UpdateUserID(user)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (service *WxService) getGroupUserNameToUserIDMap() (map[string]map[string]string, error) {
+	//群 群员
+	usersMap := make(map[string]map[string]string)
+	for _, g := range service.groups {
+		usersMap[g.NickName] = make(map[string]string)
+		member, err := g.Members()
+		if err != nil {
+			return nil, err
+		}
+		for _, u := range member {
+			usersMap[g.NickName][u.DisplayName] = u.UserName
+		}
+	}
+	return usersMap, nil
+}

@@ -1,0 +1,47 @@
+[server_configure]
+server_addr = ":8088"
+
+[qianfan_configure]
+api_key = "m6bNKukqRPWVSzonj08C1U4G"
+secret_key = "D6ltUdRFjgf4rbN72WlqDOHtlF4yfhXa"
+
+[redis_configure]
+host = "127.0.0.1"
+port = "6379"
+
+[mysql_configure]
+driver = "mysql"
+## 账号
+user_name = "zuoxingtao"
+## 密码
+pw = "!Zuoxingtao666"
+host = "127.0.0.1"
+port = "3306"
+dbname = "wx_robot"
+timeout = "10s"
+
+[log_configure]
+log_file_path = "../log/"
+log_file_name = "system.log"
+
+[sign_configure]
+sign_reward_first = 300
+sign_reward_second = 200
+sign_reward_third = 100
+sign_reward_else = 50
+sign_mark = "sign"
+
+[file_configure]
+holiday_file = "../file/holiday"
+img_file = "../file/img/"
+
+[corn_task_configure]
+holiday_tips = "0 10 10 * *"
+news_tips = "0 0 15 * *"
+
+[tanshu_configure]
+key = "216dd7ab6ec94a85194b82655c540acc"
+
+[tx_configure]
+secret_id = "AKID2DKct6Y8e5VwIlJrWIwnbLB4yz9OlKFC"
+secret_key = "8FPhVKbtBPf5iTJJPSBwv0tofgeYNEOh"
