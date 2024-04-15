@@ -84,10 +84,6 @@ func (service *WxLLMService) textToImgProducer(msg *openwechat.Message) error {
 		if err != nil {
 			return err
 		}
-		service.replyTextChan <- &reply2.Reply{
-			Message: msg,
-			Content: fmt.Sprintf(constant.ImgReply, constant.ImgGoldConsume),
-		}
 	}
 	_, err = service.wxDao.GetString(fmt.Sprintf("%s%s", constant.TextToImgMark, user.UserName))
 	if err != nil {
@@ -96,6 +92,10 @@ func (service *WxLLMService) textToImgProducer(msg *openwechat.Message) error {
 	resp, err := service.TxCloudClient.PostTextToImg(content)
 	if err != nil {
 		return err
+	}
+	service.replyTextChan <- &reply2.Reply{
+		Message: msg,
+		Content: fmt.Sprintf(constant.ImgReply, constant.ImgGoldConsume),
 	}
 	msg.Content = resp.Response.ResultImage
 	service.imgChan <- msg
