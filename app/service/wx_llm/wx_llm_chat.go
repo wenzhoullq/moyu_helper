@@ -2,7 +2,6 @@ package wx_llm
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/eatmoreapple/openwechat"
 	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
@@ -13,7 +12,7 @@ import (
 	"weixin_LLM/lib/constant"
 )
 
-func (service *WxLLMService) GetLlmReq(content, key string) ([]*chat.ChatForm, error) {
+func (service *WxLLMService) GetChatReq(content, key string) ([]*chat.ChatForm, error) {
 	llmReq := make([]*chat.ChatForm, 0)
 	chats, err := service.wxDao.GetString(key)
 	if err != nil {
@@ -62,14 +61,18 @@ func (service *WxLLMService) Forbid(resp *response.Ernie8kResponse, key string, 
 		}
 		return true, nil
 	}
+	dirtyWords := []string{"粗鲁", "不礼貌", "侮辱"}
 	//脏话封禁
-	if strings.Contains(resp.Result, "粗鲁") || strings.Contains(resp.Result, "不礼貌") || strings.Contains(resp.Result, "侮辱") {
+	for _, word := range dirtyWords {
+		if !strings.Contains(resp.Result, word) {
+			continue
+		}
 		err := service.wxDao.SetString(key, msg.Content, constant.ForbidForProfanity)
 		if err != nil {
 			return false, err
 		}
 		reply := &reply.Reply{
-			Content: "善言结善缘,恶语伤人心。你这一句话我需要花60秒来治愈自己😭😭",
+			Content: constant.ForbidDirty,
 			Message: msg,
 		}
 		service.replyTextChan <- reply
@@ -77,25 +80,38 @@ func (service *WxLLMService) Forbid(resp *response.Ernie8kResponse, key string, 
 	}
 	return false, nil
 }
-func (service *WxLLMService) llmChatProducer(msg *openwechat.Message) error {
-	if !msg.IsText() {
-		return errors.New("not chat req")
 
-	}
-	content, err := service.MessagePreprocessing(msg)
-	if err != nil {
-		return err
-	}
-	msg.Content = content
-	service.llmChan <- msg
-	service.Logln(logrus.InfoLevel, "send to llmChan")
-	return nil
-}
-func (service *WxLLMService) llmChatProcess(msg *openwechat.Message) error {
+func (service *WxLLMService) friendChatProcess(msg *openwechat.Message) error {
 	user, err := msg.Sender()
 	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
 		return err
 	}
+	err = service.chatProcess(msg, user)
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	service.Logln(logrus.InfoLevel, user.NickName, " chat")
+	return nil
+}
+
+func (service *WxLLMService) groupChatProcess(msg *openwechat.Message) error {
+	user, err := msg.SenderInGroup()
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	err = service.chatProcess(msg, user)
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	service.Logln(logrus.InfoLevel, user.NickName, " chat")
+	return nil
+}
+
+func (service *WxLLMService) chatProcess(msg *openwechat.Message, user *openwechat.User) error {
 	forbidKey := constant.Forbid + user.UserName
 	value, err := service.wxDao.GetString(forbidKey)
 	if err != nil {
@@ -107,13 +123,12 @@ func (service *WxLLMService) llmChatProcess(msg *openwechat.Message) error {
 	if value != "" {
 		return nil
 	}
-	service.Logln(logrus.InfoLevel, user.NickName, " chat")
 	key := constant.ChatMark + user.UserName
-	llmReq, err := service.GetLlmReq(constant.PreContent+msg.Content, key)
+	chatReq, err := service.GetChatReq(constant.PreContent+msg.Content, key)
 	if err != nil {
 		return err
 	}
-	resp, err := service.Chat(llmReq)
+	resp, err := service.Chat(chatReq)
 	if err != nil {
 		return err
 	}
@@ -126,21 +141,21 @@ func (service *WxLLMService) llmChatProcess(msg *openwechat.Message) error {
 		return nil
 	}
 	// 存入redis
-	err = service.StoreChat(key, resp.Result, llmReq)
+	err = service.StoreChat(key, resp.Result, chatReq)
 	if err != nil {
 		return err
 	}
 	for len([]rune(resp.Result)) > constant.MaxAnswerLen {
-		llmReq, err = service.GetLlmReq(constant.Short+resp.Result, key)
+		chatReq, err = service.GetChatReq(constant.Short+resp.Result, key)
 		if err != nil {
 			return err
 		}
-		resp, err = service.Chat(llmReq)
+		resp, err = service.Chat(chatReq)
 		if err != nil {
 			return err
 		}
 		// 存入redis
-		err = service.StoreChat(key, resp.Result, llmReq)
+		err = service.StoreChat(key, resp.Result, chatReq)
 		if err != nil {
 			return err
 		}

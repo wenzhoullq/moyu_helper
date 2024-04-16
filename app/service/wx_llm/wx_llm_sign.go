@@ -39,7 +39,6 @@ func (service *WxLLMService) signProcess(msg *openwechat.Message) error {
 	if err != nil {
 		return err
 	}
-
 	if user.DisplayName == "" {
 		reply := &reply.Reply{
 			Content: constant.SignFailReply,

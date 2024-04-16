@@ -8,137 +8,77 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
+	"strings"
 	"time"
 	reply2 "weixin_LLM/dto/reply"
 	"weixin_LLM/init/config"
 	"weixin_LLM/lib/constant"
 )
 
-func (service *WxLLMService) llmTextToImgReqProducer(msg *openwechat.Message) error {
-	content, err := service.MessagePreprocessing(msg)
+func (service *WxLLMService) textToImgMark(msg *openwechat.Message) error {
+	resp, err := service.TxCloudClient.PostTextToImg(msg.Content)
 	if err != nil {
 		return err
-	}
-	if content != constant.TextToImgKeyWord {
-		return errors.New("not imgReq")
-	}
-	user, err := msg.Sender()
-	if err != nil {
-		return err
-	}
-	if msg.IsSendByGroup() {
-		user, err = msg.SenderInGroup()
-		if err != nil {
-			service.Logln(logrus.ErrorLevel, err.Error())
-			return err
-		}
-		group, err := msg.Sender()
-		if err != nil {
-			service.Logln(logrus.ErrorLevel, err.Error())
-			return err
-		}
-		u, err := service.wxDao.GetUserByUserNameAndGroupName(user.DisplayName, group.NickName)
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				reply := &reply2.Reply{
-					Message: msg,
-					Content: constant.TransToImgApplicationFail,
-				}
-				service.replyTextChan <- reply
-				return nil
-			}
-			service.Logln(logrus.ErrorLevel, err.Error())
-			return err
-		}
-		if u.Reward < constant.ImgGoldConsume {
-			reply := &reply2.Reply{
-				Message: msg,
-				Content: constant.TransToImgApplicationFail,
-			}
-			service.replyTextChan <- reply
-			return nil
-		}
-	}
-	//存入redis标记
-	service.wxDao.SetString(fmt.Sprintf("%s%s", constant.TextToImgMark, user.UserName), nil, constant.ImgExp)
-	reply := &reply2.Reply{
-		Message: msg,
-		Content: constant.TextToImgApplicationSuccess,
-	}
-	service.replyTextChan <- reply
-	service.Logln(logrus.InfoLevel, "user:", "", "req pic to pic")
-	return nil
-}
-
-func (service *WxLLMService) textToImgProducer(msg *openwechat.Message) error {
-	content, err := service.MessagePreprocessing(msg)
-	if err != nil {
-		return err
-	}
-	user, err := msg.Sender()
-	if err != nil {
-		return err
-	}
-	if msg.IsSendByGroup() {
-		user, err = msg.SenderInGroup()
-		if err != nil {
-			return err
-		}
-	}
-	_, err = service.wxDao.GetString(fmt.Sprintf("%s%s", constant.TextToImgMark, user.UserName))
-	if err != nil {
-		return err
-	}
-	resp, err := service.TxCloudClient.PostTextToImg(content)
-	if err != nil {
-		return err
-	}
-	service.replyTextChan <- &reply2.Reply{
-		Message: msg,
-		Content: fmt.Sprintf(constant.ImgReply, constant.ImgGoldConsume),
 	}
 	msg.Content = resp.Response.ResultImage
 	service.imgChan <- msg
 	return nil
 }
 
-func (service *WxLLMService) llmImgToImgReqProducer(msg *openwechat.Message) error {
-	content, err := service.MessagePreprocessing(msg)
+func (service *WxLLMService) friendTextToImg(msg *openwechat.Message) error {
+	if !strings.HasPrefix(msg.Content, constant.TextToImgKeyWord) {
+		return errors.New("not text To img")
+	}
+	err := service.textToImgMark(msg)
 	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
 		return err
 	}
-	if content != constant.ImgToImgKeyWord {
-		return errors.New("not imgReq")
+	return nil
+}
+
+func (service *WxLLMService) groupTextToImg(msg *openwechat.Message) error {
+	if !strings.HasPrefix(msg.Content, constant.TextToImgKeyWord) {
+		return errors.New("not text To img")
 	}
-	user, err := msg.Sender()
+	user, err := msg.SenderInGroup()
 	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
 		return err
 	}
-	if msg.IsSendByGroup() {
-		user, err = msg.SenderInGroup()
-		if err != nil {
-			service.Logln(logrus.ErrorLevel, err.Error())
-			return err
-		}
-		group, err := msg.Sender()
-		if err != nil {
-			service.Logln(logrus.ErrorLevel, err.Error())
-			return err
-		}
-		u, err := service.wxDao.GetUserByUserNameAndGroupName(user.DisplayName, group.NickName)
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				reply := &reply2.Reply{
-					Message: msg,
-					Content: constant.TransToImgApplicationFail,
-				}
-				service.replyTextChan <- reply
-				return nil
-			}
-			service.Logln(logrus.ErrorLevel, err.Error())
-			return err
-		}
-		if u.Reward < constant.ImgGoldConsume {
+	group, err := msg.Sender()
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	//查看余额
+	err = service.checkGold(msg, user, group)
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	service.replyTextChan <- &reply2.Reply{
+		Message: msg,
+		Content: fmt.Sprintf(constant.ImgReplyGroup, constant.ImgGoldConsume),
+	}
+	err = service.textToImgMark(msg)
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	//扣除金币
+	err = service.deductionGold(msg, user)
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	return nil
+}
+
+func (service *WxLLMService) checkGold(msg *openwechat.Message, user *openwechat.User, group *openwechat.User) error {
+	u, err := service.wxDao.GetUserByUserNameAndGroupName(user.DisplayName, group.NickName)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			reply := &reply2.Reply{
 				Message: msg,
 				Content: constant.TransToImgApplicationFail,
@@ -146,29 +86,76 @@ func (service *WxLLMService) llmImgToImgReqProducer(msg *openwechat.Message) err
 			service.replyTextChan <- reply
 			return nil
 		}
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	if u.Reward < constant.ImgGoldConsume {
+		reply := &reply2.Reply{
+			Message: msg,
+			Content: constant.TransToImgApplicationFail,
+		}
+		service.replyTextChan <- reply
+		return errors.New("gold not enough")
+	}
+	return nil
+}
+
+func (service *WxLLMService) getImgToImgRedisKey(userName string) string {
+	return fmt.Sprintf("%s%s", constant.ImgToImgMark, userName)
+}
+
+func (service *WxLLMService) groupImgToImgMark(msg *openwechat.Message) error {
+	if msg.Content != constant.ImgToImgKeyWord {
+		return errors.New("not imgTo img Req")
+	}
+	user, err := msg.SenderInGroup()
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	group, err := msg.Sender()
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	//查看余额
+	err = service.checkGold(msg, user, group)
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
 	}
 	//存入redis标记
-	service.wxDao.SetString(fmt.Sprintf("%s%s", constant.ImgToImgMark, user.UserName), nil, constant.ImgExp)
+	service.wxDao.SetString(service.getImgToImgRedisKey(user.UserName), nil, constant.ImgExp)
 	reply := &reply2.Reply{
 		Message: msg,
 		Content: constant.ImgToImgApplicationSuccess,
 	}
 	service.replyTextChan <- reply
-	service.Logln(logrus.InfoLevel, "user:", "", "req pic to pic")
+	service.Logln(logrus.InfoLevel, "user:", user.DisplayName, "req group img to img")
 	return nil
 }
-func (service *WxLLMService) imgToImgProducer(msg *openwechat.Message) error {
+
+func (service *WxLLMService) friendImgToImgMark(msg *openwechat.Message) error {
+	if msg.Content != constant.ImgToImgKeyWord {
+		return errors.New("not imgReq")
+	}
 	user, err := msg.Sender()
 	if err != nil {
 		return err
 	}
-	if msg.IsSendByGroup() {
-		user, err = msg.SenderInGroup()
-		if err != nil {
-			return err
-		}
+	//存入redis标记
+	service.wxDao.SetString(service.getImgToImgRedisKey(user.UserName), nil, constant.ImgExp)
+	reply := &reply2.Reply{
+		Message: msg,
+		Content: constant.ImgToImgApplicationSuccess,
 	}
-	_, err = service.wxDao.GetString(fmt.Sprintf("%s%s", constant.ImgToImgMark, user.UserName))
+	service.replyTextChan <- reply
+	service.Logln(logrus.InfoLevel, "user:", user.DisplayName, " req user img to img")
+	return nil
+}
+
+func (service *WxLLMService) imgToImgProducer(user *openwechat.User, msg *openwechat.Message) error {
+	_, err := service.wxDao.GetString(service.getImgToImgRedisKey(user.UserName))
 	if err != nil {
 		return err
 	}
@@ -181,40 +168,93 @@ func (service *WxLLMService) imgToImgProducer(msg *openwechat.Message) error {
 		return err
 	}
 	picBase64 := base64.StdEncoding.EncodeToString(body)
-	service.replyTextChan <- &reply2.Reply{
-		Message: msg,
-		Content: fmt.Sprintf(constant.ImgReply, constant.ImgGoldConsume),
-	}
 	resp, err := service.TxCloudClient.PostImgToImg(picBase64)
 	if err != nil {
 		return err
 	}
+	//去除redis标记
+	_, err = service.wxDao.DelString(service.getImgToImgRedisKey(user.UserName))
+	if err != nil {
+		return err
+	}
+	//回复图片
 	msg.Content = resp.Response.ResultImage
 	service.imgChan <- msg
 	return nil
 }
 
+func (service *WxLLMService) friendImgToImgProducer(msg *openwechat.Message) error {
+	user, err := msg.Sender()
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	//回复正在生成图片的信息
+	service.replyTextChan <- &reply2.Reply{
+		Message: msg,
+		Content: constant.ImgReplyFriend,
+	}
+	err = service.imgToImgProducer(user, msg)
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	return nil
+}
+
+func (service *WxLLMService) groupImgToImgProducer(msg *openwechat.Message) error {
+	user, err := msg.SenderInGroup()
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	//回复正在生成图片的信息
+	service.replyTextChan <- &reply2.Reply{
+		Message: msg,
+		Content: fmt.Sprintf(constant.ImgReplyGroup, constant.ImgGoldConsume),
+	}
+	err = service.imgToImgProducer(user, msg)
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	err = service.deductionGold(msg, user)
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	return nil
+}
+
+func (service *WxLLMService) deductionGold(msg *openwechat.Message, user *openwechat.User) error {
+	//金币扣除
+	group, err := msg.Sender()
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	u, err := service.wxDao.GetUserByUserNameAndGroupName(user.DisplayName, group.NickName)
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	u.Reward = u.Reward - constant.ImgGoldConsume
+	err = service.wxDao.UpdateUserByUserNameAndGroupName(u)
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	//发送金币扣除通知
+	service.replyTextChan <- &reply2.Reply{
+		Message: msg,
+		Content: fmt.Sprintf(constant.ImgGoldConsumeReply, u.Reward),
+	}
+	return nil
+}
+
 func (service *WxLLMService) transToImgProcess(msg *openwechat.Message) error {
 	var fileName string
-	if msg.IsSendByGroup() {
-		user, err := msg.SenderInGroup()
-		if err != nil {
-			return err
-		}
-		group, err := msg.Sender()
-		if err != nil {
-			return err
-		}
-		fileName = fmt.Sprintf("%s-%s-%d.jpg", group.NickName, user.NickName, time.Now().Unix())
-	} else if msg.IsSendByFriend() {
-		user, err := msg.Sender()
-		if err != nil {
-			return err
-		}
-		fileName = fmt.Sprintf("%s.jpg", user.NickName)
-	} else {
-		return errors.New("not send by friend or group")
-	}
+	fileName = fmt.Sprintf("%d.jpg", time.Now().Unix())
 	data, err := base64.StdEncoding.DecodeString(msg.Content)
 	if err != nil {
 		return err
@@ -224,23 +264,9 @@ func (service *WxLLMService) transToImgProcess(msg *openwechat.Message) error {
 	if err != nil {
 		return err
 	}
-	// 如果是
-	user, err := msg.Sender()
-	if msg.IsSendByGroup() {
-		user, err = msg.SenderInGroup()
-		if err != nil {
-			service.Logln(logrus.ErrorLevel, err.Error())
-			return err
-		}
-	}
-	key := fmt.Sprintf("%s%s", constant.TextToImgMark, user.UserName)
-	if msg.IsPicture() {
-		key = fmt.Sprintf("%s%s", constant.ImgToImgMark, user.UserName)
-	}
 	service.replyImgChan <- &reply2.ImgReply{
 		Message: msg,
 		Path:    path,
-		Key:     key,
 	}
 	return nil
 }

@@ -9,5 +9,4 @@ type Reply struct {
 type ImgReply struct {
 	*openwechat.Message
 	Path string
-	Key  string
 }

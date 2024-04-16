@@ -9,6 +9,7 @@ import (
 	"weixin_LLM/init/common"
 	"weixin_LLM/lib"
 	"weixin_LLM/lib/client"
+	"weixin_LLM/lib/constant"
 )
 
 type WxCronService struct {
@@ -123,7 +124,7 @@ func (service *WxCronService) SendNews() {
 	if !service.isWorkDay() {
 		return
 	}
-	newsPre := "【摸鱼小助手】提醒您:三点几了饮茶先啦🥤。\n这里是今天的摸鱼小新闻,祝各位摸鱼人摸鱼愉快！\n"
+	newsPre := constant.NewsSuf
 	newsSuf := ""
 
 	todayNews, err := service.GetNews()
@@ -137,7 +138,7 @@ func (service *WxCronService) SendNews() {
 		service.Log(logrus.ErrorLevel, err)
 		return
 	}
-	goldNews := fmt.Sprintf("今日黄金价格:%s元/千克", goldPrice)
+	goldNews := fmt.Sprintf(constant.GoldPriceNews, goldPrice)
 	todayNews = append([]string{goldNews}, todayNews...)
 	for i, v := range todayNews {
 		newsSuf += fmt.Sprintf("%d.%s。\n", i+1, v)
