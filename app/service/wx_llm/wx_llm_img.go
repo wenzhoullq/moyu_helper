@@ -15,25 +15,15 @@ import (
 	"weixin_LLM/lib/constant"
 )
 
-func (service *WxLLMService) textToImg(msg *openwechat.Message) error {
-	resp, err := service.TxCloudClient.PostTextToImg(msg.Content)
-	if err != nil {
-		return err
-	}
-	msg.Content = resp.Response.ResultImage
-	service.imgChan <- msg
-	return nil
-}
-
 func (service *WxLLMService) friendTextToImg(msg *openwechat.Message) error {
 	if !strings.HasPrefix(msg.Content, constant.TextToImgKeyWord) {
 		return errors.New("not text To img")
 	}
-	err := service.textToImg(msg)
-	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return err
+	service.replyTextChan <- &reply2.Reply{
+		Message: msg,
+		Content: constant.ImgReplyFriend,
 	}
+	service.imgChan <- msg
 	return nil
 }
 
@@ -61,11 +51,7 @@ func (service *WxLLMService) groupTextToImg(msg *openwechat.Message) error {
 		Message: msg,
 		Content: fmt.Sprintf(constant.ImgReplyGroup, constant.ImgGoldConsume),
 	}
-	err = service.textToImg(msg)
-	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return err
-	}
+	service.imgChan <- msg
 	//扣除金币
 	err = service.deductionGold(msg, user)
 	if err != nil {
@@ -265,9 +251,13 @@ func (service *WxLLMService) deductionGold(msg *openwechat.Message, user *openwe
 }
 
 func (service *WxLLMService) transToImgProcess(msg *openwechat.Message) error {
+	resp, err := service.TxCloudClient.PostTextToImg(msg.Content)
+	if err != nil {
+		return err
+	}
 	var fileName string
 	fileName = fmt.Sprintf("%d.jpg", time.Now().Unix())
-	data, err := base64.StdEncoding.DecodeString(msg.Content)
+	data, err := base64.StdEncoding.DecodeString(resp.Response.ResultImage)
 	if err != nil {
 		return err
 	}
