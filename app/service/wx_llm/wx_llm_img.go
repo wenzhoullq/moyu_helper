@@ -62,7 +62,7 @@ func (service *WxLLMService) groupTextToImg(msg *openwechat.Message) error {
 }
 
 func (service *WxLLMService) checkGold(msg *openwechat.Message, user *openwechat.User, group *openwechat.User) error {
-	u, err := service.wxDao.GetUserByUserNameAndGroupName(user.DisplayName, group.NickName)
+	u, err := service.wxDao.GetUserByUserNameAndGroupNameAndUserId(user.DisplayName, group.NickName, user.UserName)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			reply := &reply2.Reply{
@@ -206,6 +206,11 @@ func (service *WxLLMService) groupImgToImgProducer(msg *openwechat.Message) erro
 		service.Logln(logrus.ErrorLevel, err.Error())
 		return err
 	}
+	//回复正在生成图片的信息
+	service.replyTextChan <- &reply2.Reply{
+		Message: msg,
+		Content: fmt.Sprintf(constant.ImgReplyGroup, constant.ImgGoldConsume),
+	}
 	err = service.imgToImgProducer(user, msg)
 	if err != nil {
 		service.Logln(logrus.ErrorLevel, err.Error())
@@ -215,11 +220,6 @@ func (service *WxLLMService) groupImgToImgProducer(msg *openwechat.Message) erro
 	if err != nil {
 		service.Logln(logrus.ErrorLevel, err.Error())
 		return err
-	}
-	//回复正在生成图片的信息
-	service.replyTextChan <- &reply2.Reply{
-		Message: msg,
-		Content: fmt.Sprintf(constant.ImgReplyGroup, constant.ImgGoldConsume),
 	}
 	return nil
 }
@@ -231,13 +231,13 @@ func (service *WxLLMService) deductionGold(msg *openwechat.Message, user *openwe
 		service.Logln(logrus.ErrorLevel, err.Error())
 		return err
 	}
-	u, err := service.wxDao.GetUserByUserNameAndGroupName(user.DisplayName, group.NickName)
+	u, err := service.wxDao.GetUserByUserNameAndGroupNameAndUserId(user.DisplayName, group.NickName, user.UserName)
 	if err != nil {
 		service.Logln(logrus.ErrorLevel, err.Error())
 		return err
 	}
 	u.Reward = u.Reward - constant.ImgGoldConsume
-	err = service.wxDao.UpdateUserByUserNameAndGroupName(u)
+	err = service.wxDao.UpdateUserByUserNameAndGroupNameAndUserId(u)
 	if err != nil {
 		service.Logln(logrus.ErrorLevel, err.Error())
 		return err

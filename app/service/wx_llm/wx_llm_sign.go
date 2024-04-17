@@ -89,7 +89,7 @@ func (service *WxLLMService) signProcess(msg *openwechat.Message) error {
 	default:
 		gold = config.Config.SignRewardElse
 	}
-	u, err := service.wxDao.GetUserByUserNameAndGroupName(user.DisplayName, group.NickName)
+	u, err := service.wxDao.GetUserByUserNameAndGroupNameAndUserId(user.DisplayName, group.NickName, user.UserName)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			u = &uu.User{
@@ -125,9 +125,7 @@ func (service *WxLLMService) RegularUpdateUserName() {
 			time.Sleep(time.Second * constant.RegularUpdate)
 			select {
 			default:
-
 				err := service.updateDBNickName()
-
 				if err != nil {
 					service.Logln(logrus.ErrorLevel, err.Error())
 				}
@@ -163,7 +161,7 @@ func (service *WxLLMService) updateDBNickName() error {
 				continue
 			}
 			// 修改昵称
-			user, err := service.wxDao.GetUserByUserNameAndGroupName(v, g.NickName)
+			user, err := service.wxDao.GetUserByUserNameAndGroupNameAndUserId(v, g.NickName, k)
 			if err != nil {
 				return err
 			}

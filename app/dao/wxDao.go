@@ -44,9 +44,9 @@ func (wd *WxDao) GetUsersByGroupName(groupName string) ([]*user.User, error) {
 	return users, nil
 }
 
-func (wd *WxDao) GetUserByUserNameAndGroupName(displayName string, groupName string) (*user.User, error) {
+func (wd *WxDao) GetUserByUserNameAndGroupNameAndUserId(displayName string, groupName string, userId string) (*user.User, error) {
 	user := &user.User{}
-	if err := wd.Table(user.TableName()).Where("user_name = ? and group_name = ?", displayName, groupName).Find(user).Error; err != nil {
+	if err := wd.Table(user.TableName()).Where("user_name = ? and group_name = ? and user_id = ?", displayName, groupName, userId).Find(user).Error; err != nil {
 		return nil, err
 	}
 	return user, nil
@@ -60,8 +60,8 @@ func (wd *WxDao) GetUserByUserID(userId string) (*user.User, error) {
 	return user, nil
 }
 
-func (wd *WxDao) UpdateUserByUserNameAndGroupName(user *user.User) error {
-	if err := wd.Table(user.TableName()).Where("user_name = ? and group_name = ?", user.UserName, user.GroupName).Update("reward", user.Reward).Error; err != nil {
+func (wd *WxDao) UpdateUserByUserNameAndGroupNameAndUserId(user *user.User) error {
+	if err := wd.Table(user.TableName()).Where("user_name = ? and group_name = ? and user_id = ?", user.UserName, user.GroupName, user.UserId).Update("reward", user.Reward).Error; err != nil {
 		return err
 	}
 	return nil
