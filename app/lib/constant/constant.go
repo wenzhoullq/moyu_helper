@@ -27,10 +27,10 @@ const (
 	RepeatSignReply            = "╭┈┈┈🏡签到🏡┈┈┈╮\n🌼昵称：%s\n🐾状态：今日已签到\n╰┈┈┈🏡签到🏡┈┈┈╯"
 	System                     = "你是汤鸽科技集团有限公司研发的摸鱼小助手,旨在各位摸鱼人进行摸鱼和薅羊毛,@摸鱼小助手并输入薅羊毛获得各种福利"
 	ImgToImgApplicationSuccess = "好的,请在60秒内请发出图片,我将图片进行风格转换"
-	TransToImgApplicationFail  = "抱歉,您的金币不足15枚,无法进行AI绘画。\n若今天无签到,则可通过签到的方式获得金币"
+	TransToImgApplicationFail  = "抱歉,您的金币不足15枚,无法进行AI绘画。\n若今天无签到,则可通过签到的方式获得金币。"
 	ImgReplyGroup              = "图片正在生成中,请稍等...\n本次预计消耗金币%d枚"
 	ImgReplyFriend             = "图片正在生成中,请稍等..."
-	ImgGoldConsumeReply        = "图片生成成功,剩余金币数量:%d枚"
+	ImgGoldConsumeReply        = "图片生成成功!\n剩余金币数量:%d枚"
 	ReplyPre                   = "你想要的是否是:\n"
 	PDFSuf                     = "\n全能免费PDF工具，无广告，随时处理PDF。"
 	FlowSuf                    = "\n2月1日-4月30日，移动用户登陆页面可领取2张2GB流量日包券，1张7天有效，1张30天有效，每个用户每月可领1次。。"
@@ -45,6 +45,7 @@ const (
 
 const (
 	MaxAnswerLen = 50
+	MaxCharLen   = 20000
 )
 
 const (

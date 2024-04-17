@@ -16,11 +16,14 @@ type WxLLMService struct {
 	*client.Ernie8KClient
 	*client.TxCloudClient
 	*logrus.Logger
-	signChan      chan *openwechat.Message
-	imgChan       chan *openwechat.Message
-	replyTextChan chan *reply.Reply
-	replyImgChan  chan *reply.ImgReply
-	updateChan    chan struct{}
+	signChan            chan *openwechat.Message
+	friendTextToImgChan chan *openwechat.Message
+	groupTextToImgChan  chan *openwechat.Message
+	friendImgToImgChan  chan *openwechat.Message
+	groupImgToImgChan   chan *openwechat.Message
+	replyTextChan       chan *reply.Reply
+	replyImgChan        chan *reply.ImgReply
+	updateChan          chan struct{}
 	//生产者回调函数
 	groupTextProducer  []func(*openwechat.Message) error
 	groupImgProducer   []func(*openwechat.Message) error
@@ -36,14 +39,17 @@ type WxLLMService struct {
 
 func NewWxLLMService(ops ...func(c *WxLLMService)) *WxLLMService {
 	service := &WxLLMService{
-		Ernie8KClient: client.NewErnie8KClient(client.SetToken(common.Token)),
-		TxCloudClient: client.NewTxCloudClient(),
-		signChan:      make(chan *openwechat.Message, constant.SignMaxNum),
-		imgChan:       make(chan *openwechat.Message, constant.ReplyPicMaxNum),
-		replyTextChan: make(chan *reply.Reply, constant.ReplyMaxNum),
-		replyImgChan:  make(chan *reply.ImgReply, constant.ReplyMaxNum),
-		updateChan:    make(chan struct{}, constant.UpdateMaxNum),
-		signLock:      &sync.Mutex{},
+		Ernie8KClient:       client.NewErnie8KClient(client.SetToken(common.Token)),
+		TxCloudClient:       client.NewTxCloudClient(),
+		signChan:            make(chan *openwechat.Message, constant.SignMaxNum),
+		friendTextToImgChan: make(chan *openwechat.Message, constant.ReplyPicMaxNum),
+		groupTextToImgChan:  make(chan *openwechat.Message, constant.ReplyPicMaxNum),
+		groupImgToImgChan:   make(chan *openwechat.Message, constant.ReplyPicMaxNum),
+		friendImgToImgChan:  make(chan *openwechat.Message, constant.ReplyPicMaxNum),
+		replyTextChan:       make(chan *reply.Reply, constant.ReplyMaxNum),
+		replyImgChan:        make(chan *reply.ImgReply, constant.ReplyMaxNum),
+		updateChan:          make(chan struct{}, constant.UpdateMaxNum),
+		signLock:            &sync.Mutex{},
 	}
 	service.friendTextProducer = []func(*openwechat.Message) error{service.toolsProcess, service.friendImgToImgMark, service.friendTextToImg, service.friendChatProcess}
 	service.friendImgProducer = []func(*openwechat.Message) error{service.friendImgToImgProducer}
@@ -110,8 +116,23 @@ func (service *WxLLMService) Process() {
 				if err != nil {
 					service.Logln(logrus.ErrorLevel, err.Error())
 				}
-			case msg := <-service.imgChan:
-				err := service.transToImgProcess(msg)
+			case msg := <-service.friendTextToImgChan:
+				err := service.friendTextToImgProcess(msg)
+				if err != nil {
+					service.Logln(logrus.ErrorLevel, err.Error())
+				}
+			case msg := <-service.groupTextToImgChan:
+				err := service.groupTextToImgProcess(msg)
+				if err != nil {
+					service.Logln(logrus.ErrorLevel, err.Error())
+				}
+			case msg := <-service.friendImgToImgChan:
+				err := service.friendImgToImgProcess(msg)
+				if err != nil {
+					service.Logln(logrus.ErrorLevel, err.Error())
+				}
+			case msg := <-service.groupImgToImgChan:
+				err := service.groupImgToImgProcess(msg)
 				if err != nil {
 					service.Logln(logrus.ErrorLevel, err.Error())
 				}
@@ -152,18 +173,6 @@ func (service *WxLLMService) Reply() {
 					service.Logln(logrus.ErrorLevel, err.Error())
 					continue
 				}
-				user, err := imgReply.Message.Sender()
-				if err != nil {
-					service.Logln(logrus.ErrorLevel, err.Error())
-					continue
-				}
-				if imgReply.Message.IsSendByGroup() {
-					user, err = imgReply.Message.SenderInGroup()
-					if err != nil {
-						continue
-					}
-				}
-				service.Logln(logrus.InfoLevel, user.NickName)
 			}
 		}
 	}()
