@@ -20,9 +20,9 @@ type WxService struct {
 	*logrus.Logger
 	*wx_llm.WxLLMService
 	*wx_cron.WxCronService
-	wxDao     *dao.WxDao
-	groupSend []func(*openwechat.Message) error
-	userSend  []func(*openwechat.Message) error
+	wxDao      *dao.WxDao
+	groupSend  []func(*openwechat.Message) error
+	friendSend []func(*openwechat.Message) error
 
 	groups openwechat.Groups
 }
@@ -34,7 +34,7 @@ func NewWxService() *WxService {
 		wxDao:  dao.NewWxDao(),
 	}
 	ws.groupSend = []func(*openwechat.Message) error{ws.groupTextMsg, ws.groupImgMsg}
-	ws.userSend = []func(*openwechat.Message) error{ws.userTextMsg, ws.userImgMsg}
+	ws.friendSend = []func(*openwechat.Message) error{ws.friendTextMsg, ws.friendImgMsg}
 	return ws
 }
 
@@ -60,7 +60,7 @@ func (ws *WxService) friendSender(msg *openwechat.Message) error {
 	if msg.IsSendBySelf() {
 		return errors.New("msg send by self")
 	}
-	for _, f := range ws.userSend {
+	for _, f := range ws.friendSend {
 		if f(msg) == nil {
 			return nil
 		}
@@ -102,7 +102,7 @@ func (ws *WxService) groupImgMsg(msg *openwechat.Message) error {
 	return errors.New("no such group img req")
 }
 
-func (ws *WxService) userTextMsg(msg *openwechat.Message) error {
+func (ws *WxService) friendTextMsg(msg *openwechat.Message) error {
 	if msg.IsSendBySelf() {
 		return errors.New("msg send by self")
 	}
@@ -120,7 +120,7 @@ func (ws *WxService) userTextMsg(msg *openwechat.Message) error {
 	return errors.New("no such group img req")
 }
 
-func (ws *WxService) userImgMsg(msg *openwechat.Message) error {
+func (ws *WxService) friendImgMsg(msg *openwechat.Message) error {
 	if !msg.IsPicture() {
 		return errors.New("not pic")
 	}

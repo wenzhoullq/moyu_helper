@@ -51,9 +51,11 @@ func InitKeyMap() error {
 func InitTool() error {
 	ToolMap = map[string]string{
 		"PDF": constant.PDF,
+		"流量":  constant.Flow,
 	}
 	ToolReplySuf = map[string]string{
 		"PDF": constant.PDFSuf,
+		"流量":  constant.FlowSuf,
 	}
 	return nil
 }

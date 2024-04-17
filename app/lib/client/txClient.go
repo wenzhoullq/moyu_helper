@@ -29,11 +29,12 @@ func NewTxCloudClient() *TxCloudClient {
 	return txClient
 }
 
-func (tc *TxCloudClient) PostImgToImg(base64 string) (*r1.TxImgToImgResp, error) {
+func (tc *TxCloudClient) PostImgToImg(base64 string, value string) (*r1.TxImgToImgResp, error) {
 	request := aiart.NewImageToImageRequest()
 	request.InputImage = &base64
 	var logoAdd int64 = 0
 	request.LogoAdd = &logoAdd
+	request.Prompt = &value
 	response, err := tc.Client.ImageToImage(request)
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {
 		return nil, err

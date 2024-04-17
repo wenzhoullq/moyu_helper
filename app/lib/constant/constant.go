@@ -30,9 +30,10 @@ const (
 	TransToImgApplicationFail  = "抱歉,您的金币不足15枚,无法进行AI绘画。\n若今天无签到,则可通过签到的方式获得金币"
 	ImgReplyGroup              = "图片正在生成中,请稍等...\n本次预计消耗金币%d枚"
 	ImgReplyFriend             = "图片正在生成中,请稍等..."
-	ImgGoldConsumeReply        = "图片转换成功,剩余金币数量:%d枚"
+	ImgGoldConsumeReply        = "图片生成成功,剩余金币数量:%d枚"
 	ReplyPre                   = "你想要的是否是:\n"
 	PDFSuf                     = "\n全能免费PDF工具，无广告，随时处理PDF。"
+	FlowSuf                    = "\n2月1日-4月30日，移动用户登陆页面可领取2张2GB流量日包券，1张7天有效，1张30天有效，每个用户每月可领1次。。"
 	NewsSuf                    = "【摸鱼小助手】提醒您:三点几了饮茶先啦🥤。\n这里是今天的摸鱼小新闻,祝各位摸鱼人摸鱼愉快！\n"
 	GoldPriceNews              = "今日黄金价格:%s元/千克"
 	ForbidDirty                = "善言结善缘,恶语伤人心。你这一句话我需要花60秒来治愈自己😭😭"
@@ -66,7 +67,8 @@ const (
 )
 
 const (
-	PDF = "https://tools.pdf24.org/zh/"
+	PDF  = "https://tools.pdf24.org/zh/"
+	Flow = "https://wx.10086.cn/qwhdhub/leadin/1024013102?A_C_CODE=Q0NXXsZMFT&channelId=P00000016916#/"
 )
 
 const (

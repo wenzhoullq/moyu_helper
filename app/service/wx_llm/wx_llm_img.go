@@ -15,7 +15,7 @@ import (
 	"weixin_LLM/lib/constant"
 )
 
-func (service *WxLLMService) textToImgMark(msg *openwechat.Message) error {
+func (service *WxLLMService) textToImg(msg *openwechat.Message) error {
 	resp, err := service.TxCloudClient.PostTextToImg(msg.Content)
 	if err != nil {
 		return err
@@ -29,7 +29,7 @@ func (service *WxLLMService) friendTextToImg(msg *openwechat.Message) error {
 	if !strings.HasPrefix(msg.Content, constant.TextToImgKeyWord) {
 		return errors.New("not text To img")
 	}
-	err := service.textToImgMark(msg)
+	err := service.textToImg(msg)
 	if err != nil {
 		service.Logln(logrus.ErrorLevel, err.Error())
 		return err
@@ -61,7 +61,7 @@ func (service *WxLLMService) groupTextToImg(msg *openwechat.Message) error {
 		Message: msg,
 		Content: fmt.Sprintf(constant.ImgReplyGroup, constant.ImgGoldConsume),
 	}
-	err = service.textToImgMark(msg)
+	err = service.textToImg(msg)
 	if err != nil {
 		service.Logln(logrus.ErrorLevel, err.Error())
 		return err
@@ -86,7 +86,6 @@ func (service *WxLLMService) checkGold(msg *openwechat.Message, user *openwechat
 			service.replyTextChan <- reply
 			return nil
 		}
-		service.Logln(logrus.ErrorLevel, err.Error())
 		return err
 	}
 	if u.Reward < constant.ImgGoldConsume {
@@ -105,7 +104,7 @@ func (service *WxLLMService) getImgToImgRedisKey(userName string) string {
 }
 
 func (service *WxLLMService) groupImgToImgMark(msg *openwechat.Message) error {
-	if msg.Content != constant.ImgToImgKeyWord {
+	if !strings.HasPrefix(msg.Content, constant.ImgToImgKeyWord) {
 		return errors.New("not imgTo img Req")
 	}
 	user, err := msg.SenderInGroup()
@@ -124,38 +123,51 @@ func (service *WxLLMService) groupImgToImgMark(msg *openwechat.Message) error {
 		service.Logln(logrus.ErrorLevel, err.Error())
 		return err
 	}
+	err = service.imgToImgMark(user, msg)
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	service.Logln(logrus.InfoLevel, "user:", user.DisplayName, " req user img to img")
+	return nil
+}
+
+func (service *WxLLMService) imgToImgMark(user *openwechat.User, msg *openwechat.Message) error {
+	content := strings.TrimSpace(msg.Content)
+	value := ""
+	contents := strings.Split(content, constant.ImgToImgKeyWord)
+	if len(contents) > 0 {
+		value = contents[len(contents)-1]
+	}
 	//存入redis标记
-	service.wxDao.SetString(service.getImgToImgRedisKey(user.UserName), nil, constant.ImgExp)
+	service.wxDao.SetString(service.getImgToImgRedisKey(user.UserName), value, constant.ImgExp)
 	reply := &reply2.Reply{
 		Message: msg,
 		Content: constant.ImgToImgApplicationSuccess,
 	}
 	service.replyTextChan <- reply
-	service.Logln(logrus.InfoLevel, "user:", user.DisplayName, "req group img to img")
 	return nil
 }
 
 func (service *WxLLMService) friendImgToImgMark(msg *openwechat.Message) error {
-	if msg.Content != constant.ImgToImgKeyWord {
-		return errors.New("not imgReq")
+	if !strings.HasPrefix(msg.Content, constant.ImgToImgKeyWord) {
+		return errors.New("not imgTo img Req")
 	}
 	user, err := msg.Sender()
 	if err != nil {
 		return err
 	}
-	//存入redis标记
-	service.wxDao.SetString(service.getImgToImgRedisKey(user.UserName), nil, constant.ImgExp)
-	reply := &reply2.Reply{
-		Message: msg,
-		Content: constant.ImgToImgApplicationSuccess,
+	err = service.imgToImgMark(user, msg)
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
 	}
-	service.replyTextChan <- reply
 	service.Logln(logrus.InfoLevel, "user:", user.DisplayName, " req user img to img")
 	return nil
 }
 
 func (service *WxLLMService) imgToImgProducer(user *openwechat.User, msg *openwechat.Message) error {
-	_, err := service.wxDao.GetString(service.getImgToImgRedisKey(user.UserName))
+	value, err := service.wxDao.GetString(service.getImgToImgRedisKey(user.UserName))
 	if err != nil {
 		return err
 	}
@@ -168,7 +180,7 @@ func (service *WxLLMService) imgToImgProducer(user *openwechat.User, msg *openwe
 		return err
 	}
 	picBase64 := base64.StdEncoding.EncodeToString(body)
-	resp, err := service.TxCloudClient.PostImgToImg(picBase64)
+	resp, err := service.TxCloudClient.PostImgToImg(picBase64, value)
 	if err != nil {
 		return err
 	}
