@@ -208,11 +208,6 @@ func (service *WxLLMService) groupImgToImgProducer(msg *openwechat.Message) erro
 		service.Logln(logrus.ErrorLevel, err.Error())
 		return err
 	}
-	//回复正在生成图片的信息
-	service.replyTextChan <- &reply2.Reply{
-		Message: msg,
-		Content: fmt.Sprintf(constant.ImgReplyGroup, constant.ImgGoldConsume),
-	}
 	err = service.imgToImgProducer(user, msg)
 	if err != nil {
 		service.Logln(logrus.ErrorLevel, err.Error())
@@ -222,6 +217,11 @@ func (service *WxLLMService) groupImgToImgProducer(msg *openwechat.Message) erro
 	if err != nil {
 		service.Logln(logrus.ErrorLevel, err.Error())
 		return err
+	}
+	//回复正在生成图片的信息
+	service.replyTextChan <- &reply2.Reply{
+		Message: msg,
+		Content: fmt.Sprintf(constant.ImgReplyGroup, constant.ImgGoldConsume),
 	}
 	return nil
 }
