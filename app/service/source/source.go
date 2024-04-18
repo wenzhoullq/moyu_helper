@@ -7,6 +7,7 @@ import (
 	"weixin_LLM/dao"
 	"weixin_LLM/dto/request"
 	source2 "weixin_LLM/dto/source"
+	"weixin_LLM/init/common"
 	"weixin_LLM/init/log"
 	"weixin_LLM/lib"
 	"weixin_LLM/lib/constant"
@@ -57,6 +58,10 @@ func (ss *SourceService) CreateSource(c context.Context, req *request.CreateSour
 	}
 	if err := ss.SourceDao.CreateSource(source); err != nil {
 		lib.SetResponse(resp, lib.SetErrMsg(err.Error()), lib.SetErrNo(constant.DBErr))
+		return resp, err
+	}
+	if err := common.InitTool(); err != nil {
+		lib.SetResponse(resp, lib.SetErrMsg(err.Error()), lib.SetErrNo(constant.ServerErr))
 		return resp, err
 	}
 	ss.Logln(logrus.InfoLevel, "create Source success")
