@@ -36,6 +36,16 @@ func GetCurYearAndMonthAndDay() string {
 	return fmt.Sprintf("%d%d%d", now.Year(), now.Month(), now.Day())
 }
 
+func TimeHasExp(str string) (bool, error) {
+	now := time.Now()
+	timeA, err := time.Parse("2006-01-02 15:04:05", str)
+	if err != nil {
+		return false, err
+	}
+
+	return timeA.Before(now), nil
+}
+
 func GetCurTime() string {
 	now := time.Now()
 	formatted := now.Format("15:04:05")

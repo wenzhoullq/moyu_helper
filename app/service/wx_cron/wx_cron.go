@@ -18,8 +18,9 @@ type WxCronService struct {
 	*logrus.Logger
 	groups openwechat.Groups
 	*client.TanshuClient
-	wxDao *dao.WxDao
-	self  *openwechat.Self
+	wxDao     *dao.WxDao
+	sourceDao *dao.SourceDao
+	self      *openwechat.Self
 }
 
 func NewWxCronService(ops ...func(*WxCronService)) *WxCronService {
@@ -41,6 +42,12 @@ func SetSelf(self *openwechat.Self) func(*WxCronService) {
 func SetWxCronServiceWxDao(wxDao *dao.WxDao) func(ws *WxCronService) {
 	return func(ws *WxCronService) {
 		ws.wxDao = wxDao
+	}
+}
+
+func SetWxCronServiceSourceDao(sourceDao *dao.SourceDao) func(ws *WxCronService) {
+	return func(ws *WxCronService) {
+		ws.sourceDao = sourceDao
 	}
 }
 
@@ -169,7 +176,44 @@ func (service *WxCronService) SendNews() {
 	return
 }
 
-func (service *WxCronService) RegularUpdateUserName() {
+func (service *WxCronService) RegularUpdate() {
+	err := service.RegularUpdateUserName()
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+	}
+	err = service.RegularSource()
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+	}
+}
+func (service *WxCronService) RegularSource() error {
+	sources, err := service.sourceDao.GetNotExpSources()
+	if err != nil {
+		return err
+	}
+	for i, _ := range sources {
+		s := sources[i]
+		exp, err := lib.TimeHasExp(s.SourceExp)
+		if err != nil {
+			return err
+		}
+		if !exp {
+			continue
+		}
+		//去除Map
+		delete(common.ToolMap, s.SourceName)
+		delete(common.ToolReplySuf, s.SourceName)
+		//更新db
+		s.Status = constant.SourceExp
+		err = service.sourceDao.UpdateSource(s)
+		if err != nil {
+			return err
+		}
+
+	}
+	return nil
+}
+func (service *WxCronService) RegularUpdateUserName() error {
 	defer func() {
 		if err := recover(); err != nil {
 			service.Logln(logrus.PanicLevel, "panic:", err)
@@ -177,18 +221,15 @@ func (service *WxCronService) RegularUpdateUserName() {
 	}()
 	err := service.self.UpdateMembersDetail()
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return
+		return err
 	}
 	preMap, err := service.getGroupUserMapFromDB()
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return
+		return err
 	}
 	newMap, err := service.getGroupUserIDToUserNameMap()
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return
+		return err
 	}
 	//查看是否修改过昵称
 	for _, g := range service.groups {
@@ -200,19 +241,19 @@ func (service *WxCronService) RegularUpdateUserName() {
 			user, err := service.wxDao.GetUserByUserNameAndGroupNameAndUserId(v, g.NickName, k)
 			if err != nil {
 				service.Logln(logrus.ErrorLevel, err.Error())
-				return
+				return err
 			}
 			user.UserName = newMap[g.NickName][k]
 			err = service.wxDao.UpdateUserName(user)
 			if err != nil {
-				service.Logln(logrus.ErrorLevel, err.Error())
-				return
+				return err
 			}
 		}
 	}
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
 	}
+	return nil
 }
 func (service *WxCronService) getGroupUserMapFromDB() (map[string]map[string]string, error) {
 	//群 群员

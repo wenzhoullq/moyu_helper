@@ -21,6 +21,7 @@ type WxService struct {
 	*wx_llm.WxLLMService
 	*wx_cron.WxCronService
 	wxDao      *dao.WxDao
+	sourceDao  *dao.SourceDao
 	groupSend  []func(*openwechat.Message) error
 	friendSend []func(*openwechat.Message) error
 	groups     openwechat.Groups
@@ -28,9 +29,10 @@ type WxService struct {
 
 func NewWxService() *WxService {
 	ws := &WxService{
-		Bot:    openwechat.DefaultBot(openwechat.Desktop),
-		Logger: log.Logger,
-		wxDao:  dao.NewWxDao(),
+		Bot:       openwechat.DefaultBot(openwechat.Desktop),
+		Logger:    log.Logger,
+		wxDao:     dao.NewWxDao(),
+		sourceDao: dao.NewSourceDao(),
 	}
 	ws.groupSend = []func(*openwechat.Message) error{ws.groupTextMsg, ws.groupImgMsg}
 	ws.friendSend = []func(*openwechat.Message) error{ws.friendTextMsg, ws.friendImgMsg}
@@ -178,8 +180,8 @@ func (ws *WxService) InitWxRobot() error {
 
 	}
 	//初始化WxCron
-	ws.WxCronService = wx_cron.NewWxCronService(wx_cron.SetWxCronServiceWxDao(ws.wxDao), wx_cron.SetSelf(self),
-		wx_cron.SetBot(ws.Bot), wx_cron.SetWxCronGroups(groups), wx_cron.SetWxCronServiceLog(ws.Logger))
+	ws.WxCronService = wx_cron.NewWxCronService(wx_cron.SetWxCronServiceWxDao(ws.wxDao), wx_cron.SetWxCronServiceSourceDao(ws.sourceDao),
+		wx_cron.SetSelf(self), wx_cron.SetBot(ws.Bot), wx_cron.SetWxCronGroups(groups), wx_cron.SetWxCronServiceLog(ws.Logger))
 	//初始化,批量更新userID
 	err = ws.ReloadAndUpdateUserName()
 	if err != nil {
@@ -189,7 +191,6 @@ func (ws *WxService) InitWxRobot() error {
 	// llm功能
 	ws.Process()
 	ws.Reply()
-	ws.RegularUpdateUserName()
 	ws.MessageUpdateUserName()
 
 	// cron功能
@@ -202,7 +203,7 @@ func (ws *WxService) InitWxRobot() error {
 	if err != nil {
 		return err
 	}
-	err = c.AddFunc(config.Config.UpdateUserName, ws.RegularUpdateUserName)
+	err = c.AddFunc(config.Config.RegularUpdate, ws.RegularUpdate)
 	if err != nil {
 		return err
 	}
