@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"time"
+	dao2 "weixin_LLM/dao"
 	"weixin_LLM/dto/holiday"
 	"weixin_LLM/init/config"
 	"weixin_LLM/lib/client"
@@ -49,13 +50,16 @@ func InitKeyMap() error {
 }
 
 func InitTool() error {
-	ToolMap = map[string]string{
-		"PDF": constant.PDF,
-		"流量":  constant.Flow,
+	dao := dao2.NewSourceDao()
+	sources, err := dao.GetNotExpSources()
+	if err != nil {
+		return err
 	}
-	ToolReplySuf = map[string]string{
-		"PDF": constant.PDFSuf,
-		"流量":  constant.FlowSuf,
+	ToolMap = make(map[string]string)
+	ToolReplySuf = make(map[string]string)
+	for _, s := range sources {
+		ToolMap[s.SourceName] = s.SourceLink
+		ToolReplySuf[s.SourceName] = s.SourceDesc
 	}
 	return nil
 }

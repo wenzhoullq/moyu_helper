@@ -22,7 +22,7 @@ func NewTxCloudClient() *TxCloudClient {
 	)
 	cpf := profile.NewClientProfile()
 	cpf.HttpProfile.Endpoint = "aiart.tencentcloudapi.com"
-	client, _ := aiart.NewClient(credential, constant.RegionShanhai, cpf)
+	client, _ := aiart.NewClient(credential, constant.RegionShanghai, cpf)
 	txClient := &TxCloudClient{
 		Client: client,
 	}

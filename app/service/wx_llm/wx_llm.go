@@ -29,12 +29,11 @@ type WxLLMService struct {
 	groupImgProducer   []func(*openwechat.Message) error
 	friendTextProducer []func(*openwechat.Message) error
 	friendImgProducer  []func(*openwechat.Message) error
-
-	wxDao    *dao.WxDao
-	self     *openwechat.Self
-	groups   openwechat.Groups
-	friends  openwechat.Friends
-	signLock *sync.Mutex
+	wxDao              *dao.WxDao
+	self               *openwechat.Self
+	groups             openwechat.Groups
+	friends            openwechat.Friends
+	signLock           *sync.Mutex
 }
 
 func NewWxLLMService(ops ...func(c *WxLLMService)) *WxLLMService {

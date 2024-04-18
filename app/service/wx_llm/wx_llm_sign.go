@@ -119,62 +119,6 @@ func (service *WxLLMService) signProcess(msg *openwechat.Message) error {
 	return nil
 }
 
-func (service *WxLLMService) RegularUpdateUserName() {
-	go func() {
-		for {
-			time.Sleep(time.Second * constant.RegularUpdate)
-			select {
-			default:
-				err := service.updateDBNickName()
-				if err != nil {
-					service.Logln(logrus.ErrorLevel, err.Error())
-				}
-			}
-		}
-	}()
-}
-
-func (service *WxLLMService) updateDBNickName() error {
-	defer func() {
-		if err := recover(); err != nil {
-			service.Logln(logrus.PanicLevel, "panic:", err)
-		}
-	}()
-	service.signLock.Lock()
-	defer service.signLock.Unlock()
-	err := service.self.UpdateMembersDetail()
-	if err != nil {
-		return err
-	}
-	preMap, err := service.getGroupUserMapFromDB()
-	if err != nil {
-		return err
-	}
-	newMap, err := service.getGroupUserIDToUserNameMap()
-	if err != nil {
-		return err
-	}
-	//查看是否修改过昵称
-	for _, g := range service.groups {
-		for k, v := range preMap[g.NickName] {
-			if v == newMap[g.NickName][k] {
-				continue
-			}
-			// 修改昵称
-			user, err := service.wxDao.GetUserByUserNameAndGroupNameAndUserId(v, g.NickName, k)
-			if err != nil {
-				return err
-			}
-			user.UserName = newMap[g.NickName][k]
-			err = service.wxDao.UpdateUserName(user)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 func (service *WxLLMService) MessageUpdateUserName() {
 	go func() {
 		for {
@@ -192,42 +136,4 @@ func (service *WxLLMService) MessageUpdateUserName() {
 			}
 		}
 	}()
-}
-
-func (service *WxLLMService) getGroupUserIDToUserNameMap() (map[string]map[string]string, error) {
-	//群 群员
-	usersMap := make(map[string]map[string]string)
-	for _, g := range service.groups {
-		if g.NickName == "" {
-			continue
-		}
-		usersMap[g.NickName] = make(map[string]string)
-		member, err := g.Members()
-		if err != nil {
-			return nil, err
-		}
-		for _, u := range member {
-			usersMap[g.NickName][u.UserName] = u.DisplayName
-		}
-	}
-	return usersMap, nil
-}
-
-func (service *WxLLMService) getGroupUserMapFromDB() (map[string]map[string]string, error) {
-	//群 群员
-	usersMap := make(map[string]map[string]string)
-	for _, g := range service.groups {
-		if g.NickName == "" {
-			continue
-		}
-		usersMap[g.NickName] = make(map[string]string)
-		users, err := service.wxDao.GetUsersByGroupName(g.NickName)
-		if err != nil {
-			return nil, err
-		}
-		for _, u := range users {
-			usersMap[g.NickName][u.UserId] = u.UserName
-		}
-	}
-	return usersMap, nil
 }

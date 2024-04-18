@@ -65,6 +65,7 @@ type TanshuConfigure struct {
 }
 
 type CronTaskConfigure struct {
-	HolidayTips string `toml:"holiday_tips"`
-	NewsTips    string `toml:"news_tips"`
+	HolidayTips    string `toml:"holiday_tips"`
+	NewsTips       string `toml:"news_tips"`
+	UpdateUserName string `toml:"update_user_name"`
 }

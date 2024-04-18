@@ -2,12 +2,14 @@ package main
 
 import (
 	l "log"
+	"net/http"
 	"os"
 	"weixin_LLM/init/common"
 	"weixin_LLM/init/config"
 	"weixin_LLM/init/db"
 	"weixin_LLM/init/log"
 	"weixin_LLM/init/redis"
+	"weixin_LLM/init/route"
 	"weixin_LLM/service"
 )
 
@@ -48,6 +50,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// 阻塞主goroutine, 直到发生异常或者用户主动退出
-	ws.Block()
+	srv := &http.Server{
+		Addr:    config.Config.ServerAddr,
+		Handler: route.RouteInit(),
+	}
+	err = srv.ListenAndServe()
+	if err != nil {
+		panic(err)
+	}
 }

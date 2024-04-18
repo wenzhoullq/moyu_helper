@@ -23,8 +23,7 @@ type WxService struct {
 	wxDao      *dao.WxDao
 	groupSend  []func(*openwechat.Message) error
 	friendSend []func(*openwechat.Message) error
-
-	groups openwechat.Groups
+	groups     openwechat.Groups
 }
 
 func NewWxService() *WxService {
@@ -50,7 +49,7 @@ func (ws *WxService) groupSender(msg *openwechat.Message) error {
 			return nil
 		}
 	}
-	return errors.New("no such group req")
+	return errors.New("no such group request")
 }
 
 func (ws *WxService) friendSender(msg *openwechat.Message) error {
@@ -65,7 +64,7 @@ func (ws *WxService) friendSender(msg *openwechat.Message) error {
 			return nil
 		}
 	}
-	return errors.New("no such friend req")
+	return errors.New("no such friend request")
 }
 
 func (ws *WxService) groupTextMsg(msg *openwechat.Message) error {
@@ -87,7 +86,7 @@ func (ws *WxService) groupTextMsg(msg *openwechat.Message) error {
 			return nil
 		}
 	}
-	return errors.New("no such group text req")
+	return errors.New("no such group text request")
 }
 
 func (ws *WxService) groupImgMsg(msg *openwechat.Message) error {
@@ -99,7 +98,7 @@ func (ws *WxService) groupImgMsg(msg *openwechat.Message) error {
 			return nil
 		}
 	}
-	return errors.New("no such group img req")
+	return errors.New("no such group img request")
 }
 
 func (ws *WxService) friendTextMsg(msg *openwechat.Message) error {
@@ -117,7 +116,7 @@ func (ws *WxService) friendTextMsg(msg *openwechat.Message) error {
 			return nil
 		}
 	}
-	return errors.New("no such group img req")
+	return errors.New("no such group img request")
 }
 
 func (ws *WxService) friendImgMsg(msg *openwechat.Message) error {
@@ -129,7 +128,7 @@ func (ws *WxService) friendImgMsg(msg *openwechat.Message) error {
 			return nil
 		}
 	}
-	return errors.New("no such user img req")
+	return errors.New("no such user img request")
 }
 func (ws *WxService) InitWxRobot() error {
 	// 注册登陆二维码回调
@@ -179,7 +178,8 @@ func (ws *WxService) InitWxRobot() error {
 
 	}
 	//初始化WxCron
-	ws.WxCronService = wx_cron.NewWxCronService(wx_cron.SetBot(ws.Bot), wx_cron.SetWxCronGroups(groups), wx_cron.SetWxCronServiceLog(ws.Logger))
+	ws.WxCronService = wx_cron.NewWxCronService(wx_cron.SetWxCronServiceWxDao(ws.wxDao), wx_cron.SetSelf(self),
+		wx_cron.SetBot(ws.Bot), wx_cron.SetWxCronGroups(groups), wx_cron.SetWxCronServiceLog(ws.Logger))
 	//初始化,批量更新userID
 	err = ws.ReloadAndUpdateUserName()
 	if err != nil {
@@ -199,6 +199,10 @@ func (ws *WxService) InitWxRobot() error {
 		return err
 	}
 	err = c.AddFunc(config.Config.NewsTips, ws.SendNews)
+	if err != nil {
+		return err
+	}
+	err = c.AddFunc(config.Config.UpdateUserName, ws.RegularUpdateUserName)
 	if err != nil {
 		return err
 	}
@@ -231,12 +235,18 @@ func (service *WxService) getGroupUserNameToUserIDMap() (map[string]map[string]s
 	//群 群员
 	usersMap := make(map[string]map[string]string)
 	for _, g := range service.groups {
+		if g.NickName == "" {
+			continue
+		}
 		usersMap[g.NickName] = make(map[string]string)
 		member, err := g.Members()
 		if err != nil {
 			return nil, err
 		}
 		for _, u := range member {
+			if u.DisplayName == "" {
+				continue
+			}
 			usersMap[g.NickName][u.DisplayName] = u.UserName
 		}
 	}

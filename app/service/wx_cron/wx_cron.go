@@ -5,6 +5,7 @@ import (
 	"github.com/eatmoreapple/openwechat"
 	"github.com/sirupsen/logrus"
 	"time"
+	"weixin_LLM/dao"
 	holiday2 "weixin_LLM/dto/holiday"
 	"weixin_LLM/init/common"
 	"weixin_LLM/lib"
@@ -17,6 +18,8 @@ type WxCronService struct {
 	*logrus.Logger
 	groups openwechat.Groups
 	*client.TanshuClient
+	wxDao *dao.WxDao
+	self  *openwechat.Self
 }
 
 func NewWxCronService(ops ...func(*WxCronService)) *WxCronService {
@@ -27,6 +30,18 @@ func NewWxCronService(ops ...func(*WxCronService)) *WxCronService {
 		op(service)
 	}
 	return service
+}
+
+func SetSelf(self *openwechat.Self) func(*WxCronService) {
+	return func(wls *WxCronService) {
+		wls.self = self
+	}
+}
+
+func SetWxCronServiceWxDao(wxDao *dao.WxDao) func(ws *WxCronService) {
+	return func(ws *WxCronService) {
+		ws.wxDao = wxDao
+	}
 }
 
 func SetWxCronServiceLog(log *logrus.Logger) func(*WxCronService) {
@@ -152,4 +167,86 @@ func (service *WxCronService) SendNews() {
 		}
 	}
 	return
+}
+
+func (service *WxCronService) RegularUpdateUserName() {
+	defer func() {
+		if err := recover(); err != nil {
+			service.Logln(logrus.PanicLevel, "panic:", err)
+		}
+	}()
+	err := service.self.UpdateMembersDetail()
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return
+	}
+	preMap, err := service.getGroupUserMapFromDB()
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return
+	}
+	newMap, err := service.getGroupUserIDToUserNameMap()
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return
+	}
+	//查看是否修改过昵称
+	for _, g := range service.groups {
+		for k, v := range preMap[g.NickName] {
+			if v == newMap[g.NickName][k] {
+				continue
+			}
+			// 修改昵称
+			user, err := service.wxDao.GetUserByUserNameAndGroupNameAndUserId(v, g.NickName, k)
+			if err != nil {
+				service.Logln(logrus.ErrorLevel, err.Error())
+				return
+			}
+			user.UserName = newMap[g.NickName][k]
+			err = service.wxDao.UpdateUserName(user)
+			if err != nil {
+				service.Logln(logrus.ErrorLevel, err.Error())
+				return
+			}
+		}
+	}
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+	}
+}
+func (service *WxCronService) getGroupUserMapFromDB() (map[string]map[string]string, error) {
+	//群 群员
+	usersMap := make(map[string]map[string]string)
+	for _, g := range service.groups {
+		if g.NickName == "" {
+			continue
+		}
+		usersMap[g.NickName] = make(map[string]string)
+		users, err := service.wxDao.GetUsersByGroupName(g.NickName)
+		if err != nil {
+			return nil, err
+		}
+		for _, u := range users {
+			usersMap[g.NickName][u.UserId] = u.UserName
+		}
+	}
+	return usersMap, nil
+}
+func (service *WxCronService) getGroupUserIDToUserNameMap() (map[string]map[string]string, error) {
+	//群 群员
+	usersMap := make(map[string]map[string]string)
+	for _, g := range service.groups {
+		if g.NickName == "" {
+			continue
+		}
+		usersMap[g.NickName] = make(map[string]string)
+		member, err := g.Members()
+		if err != nil {
+			return nil, err
+		}
+		for _, u := range member {
+			usersMap[g.NickName][u.UserName] = u.DisplayName
+		}
+	}
+	return usersMap, nil
 }

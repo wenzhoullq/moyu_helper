@@ -7,8 +7,8 @@ secret_key = "D6ltUdRFjgf4rbN72WlqDOHtlF4yfhXa"
 access_key = "d86ba79e77454ac5846dc57d1359b22b"
 
 [redis_configure]
-host ="127.0.0.1"
-port ="6379"
+host = "127.0.0.1"
+port = "6379"
 
 [mysql_configure]
 driver = "mysql"
@@ -38,6 +38,7 @@ img_file = "../file/img/"
 [corn_task_configure]
 holiday_tips = "0 10 10 * *"
 news_tips = "0 0 15 * *"
+update_user_name = "0 0 23 * *"
 
 [tanshu_configure]
 key = "216dd7ab6ec94a85194b82655c540acc"

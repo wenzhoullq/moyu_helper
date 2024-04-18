@@ -38,6 +38,7 @@ img_file = "../file/img/"
 [corn_task_configure]
 holiday_tips = "0 10 10 * *"
 news_tips = "0 0 15 * *"
+update_user_name = "0 0 23 * *"
 
 [tanshu_configure]
 key = "216dd7ab6ec94a85194b82655c540acc"
