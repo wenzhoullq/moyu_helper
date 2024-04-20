@@ -117,7 +117,8 @@ func (service *WxCronService) SendHolidayTips() {
 		holidaySet[v.Name] = struct{}{}
 		nextRestDays = append(nextRestDays, v)
 	}
-	holidayTipPre := "【摸鱼小助手】提醒您:各位摸鱼人上午好🌹！\n工作再累，一定不要忘记摸🐟哦！有事没事起身去茶水间、去厕所、去廊道走走，别老在工位上坐着，💴是老板的，但命是自己的！\n"
+	holidayTipPre := constant.HolidayTip
+	ad := common.AdMap[time.Wednesday]
 	holidayTipSuf := ""
 	for i, v := range nextRestDays {
 		diffDay, err := lib.CalDays(today, v.Date)
@@ -130,7 +131,7 @@ func (service *WxCronService) SendHolidayTips() {
 			holidayTipSuf += "\n"
 		}
 	}
-	holidayTip := holidayTipPre + holidayTipSuf
+	holidayTip := holidayTipPre + ad + holidayTipSuf
 	for _, group := range service.groups {
 		_, err := group.SendText(holidayTip)
 		if err != nil {

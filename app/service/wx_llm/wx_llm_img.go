@@ -17,19 +17,17 @@ import (
 	"weixin_LLM/lib/constant"
 )
 
-func (service *WxLLMService) friendTextToImg(msg *openwechat.Message) error {
+func (service *WxLLMService) friendTextToImg(msg *openwechat.Message) (bool, error) {
 	if !strings.HasPrefix(msg.Content, constant.TextToImgKeyWord) {
-		return errors.New("not text To img")
+		return false, nil
 	}
 	user, err := msg.Sender()
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return nil
+		return true, err
 	}
 	err = service.DailyFreeTimeCheck(user, msg)
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return nil
+		return true, err
 	}
 	//回复正在生成中
 	service.replyTextChan <- &reply2.Reply{
@@ -37,31 +35,25 @@ func (service *WxLLMService) friendTextToImg(msg *openwechat.Message) error {
 		Content: constant.ImgReplyFriend,
 	}
 	service.friendTextToImgChan <- msg
-	return nil
+	return true, nil
 }
 
-func (service *WxLLMService) groupTextToImg(msg *openwechat.Message) error {
+func (service *WxLLMService) groupTextToImg(msg *openwechat.Message) (bool, error) {
 	if !strings.HasPrefix(msg.Content, constant.TextToImgKeyWord) {
-		return errors.New("not text To img")
+		return false, nil
 	}
 	user, err := msg.SenderInGroup()
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return nil
+		return true, err
 	}
 	group, err := msg.Sender()
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return nil
+		return true, err
 	}
 	//查看余额
 	err = service.checkGold(msg, user, group)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil
-		}
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return nil
+		return true, err
 	}
 	//回复正在生成中
 	service.replyTextChan <- &reply2.Reply{
@@ -69,7 +61,7 @@ func (service *WxLLMService) groupTextToImg(msg *openwechat.Message) error {
 		Content: fmt.Sprintf(constant.ImgReplyGroup, constant.ImgGoldConsume),
 	}
 	service.groupTextToImgChan <- msg
-	return nil
+	return true, nil
 }
 
 func (service *WxLLMService) checkGold(msg *openwechat.Message, user *openwechat.User, group *openwechat.User) error {
@@ -100,37 +92,30 @@ func (service *WxLLMService) getImgToImgRedisKey(userName string) string {
 	return fmt.Sprintf("%s%s", constant.ImgToImgMark, userName)
 }
 
-func (service *WxLLMService) groupImgToImgMark(msg *openwechat.Message) error {
+func (service *WxLLMService) groupImgToImgMark(msg *openwechat.Message) (bool, error) {
 	if !strings.HasPrefix(msg.Content, constant.ImgToImgKeyWord) {
-		return errors.New("not imgTo img Req")
+		return false, nil
 	}
 	user, err := msg.SenderInGroup()
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return nil
+		return true, err
 	}
 	group, err := msg.Sender()
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return nil
+		return true, err
 	}
 	//查看余额
 	err = service.checkGold(msg, user, group)
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil
-		}
-		return nil
+		return true, err
 	}
 	//打标记
 	err = service.imgToImgMark(user, msg)
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return nil
+		return true, err
 	}
 	service.Logln(logrus.InfoLevel, "user:", user.DisplayName, " request user img to img")
-	return nil
+	return true, nil
 }
 
 func (service *WxLLMService) imgToImgMark(user *openwechat.User, msg *openwechat.Message) error {
@@ -178,29 +163,26 @@ func (service *WxLLMService) DailyFreeTimeCheck(user *openwechat.User, msg *open
 	return nil
 }
 
-func (service *WxLLMService) friendImgToImgMark(msg *openwechat.Message) error {
+func (service *WxLLMService) friendImgToImgMark(msg *openwechat.Message) (bool, error) {
 	if !strings.HasPrefix(msg.Content, constant.ImgToImgKeyWord) {
-		return errors.New("not imgTo img Req")
+		return false, nil
 	}
 	user, err := msg.Sender()
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return nil
+		return true, err
 	}
 	// 查看免费额度
 	err = service.DailyFreeTimeCheck(user, msg)
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return nil
+		return true, err
 	}
 	//打标记
 	err = service.imgToImgMark(user, msg)
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return nil
+		return true, err
 	}
 	service.Logln(logrus.InfoLevel, "user:", user.DisplayName, " request user img to img")
-	return nil
+	return true, err
 }
 
 func (service *WxLLMService) imgToImg(msg *openwechat.Message, key, value string) error {
@@ -229,19 +211,18 @@ func (service *WxLLMService) imgToImg(msg *openwechat.Message, key, value string
 	return nil
 }
 
-func (service *WxLLMService) friendImgToImgProducer(msg *openwechat.Message) error {
+func (service *WxLLMService) friendImgToImgProducer(msg *openwechat.Message) (bool, error) {
 	user, err := msg.Sender()
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return err
+		return true, err
 	}
 	key := service.getImgToImgRedisKey(user.UserName)
 	value, err := service.wxDao.GetString(key)
 	if err != nil {
 		if err == redis.Nil {
-			return err
+			return true, nil
 		}
-		return nil
+		return true, err
 	}
 	service.replyTextChan <- &reply2.Reply{
 		Message: msg,
@@ -249,27 +230,22 @@ func (service *WxLLMService) friendImgToImgProducer(msg *openwechat.Message) err
 	}
 	err = service.imgToImg(msg, key, value)
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return nil
+		return true, err
 	}
 	//处理图片
 	service.friendImgToImgChan <- msg
-	return nil
+	return true, err
 }
 
-func (service *WxLLMService) groupImgToImgProducer(msg *openwechat.Message) error {
+func (service *WxLLMService) groupImgToImgProducer(msg *openwechat.Message) (bool, error) {
 	user, err := msg.SenderInGroup()
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return nil
+		return true, err
 	}
 	key := service.getImgToImgRedisKey(user.UserName)
 	value, err := service.wxDao.GetString(key)
 	if err != nil {
-		if err == redis.Nil {
-			return err
-		}
-		return nil
+		return true, err
 	}
 	//发送通知
 	service.replyTextChan <- &reply2.Reply{
@@ -279,12 +255,11 @@ func (service *WxLLMService) groupImgToImgProducer(msg *openwechat.Message) erro
 	//保存图片
 	err = service.imgToImg(msg, key, value)
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return nil
+		return true, err
 	}
 	//进入下一段处理
 	service.groupImgToImgChan <- msg
-	return nil
+	return true, nil
 }
 
 func (service *WxLLMService) deductionGold(msg *openwechat.Message, user *openwechat.User) error {

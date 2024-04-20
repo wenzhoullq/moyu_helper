@@ -22,8 +22,8 @@ type WxService struct {
 	*wx_cron.WxCronService
 	wxDao      *dao.WxDao
 	sourceDao  *dao.SourceDao
-	groupSend  []func(*openwechat.Message) error
-	friendSend []func(*openwechat.Message) error
+	groupSend  []func(*openwechat.Message) (bool, error)
+	friendSend []func(*openwechat.Message) (bool, error)
 	groups     openwechat.Groups
 }
 
@@ -34,44 +34,52 @@ func NewWxService() *WxService {
 		wxDao:     dao.NewWxDao(),
 		sourceDao: dao.NewSourceDao(),
 	}
-	ws.groupSend = []func(*openwechat.Message) error{ws.groupTextMsg, ws.groupImgMsg}
-	ws.friendSend = []func(*openwechat.Message) error{ws.friendTextMsg, ws.friendImgMsg}
+	ws.groupSend = []func(*openwechat.Message) (bool, error){ws.groupTextMsg, ws.groupImgMsg}
+	ws.friendSend = []func(*openwechat.Message) (bool, error){ws.friendTextMsg, ws.friendImgMsg}
 	return ws
 }
 
-func (ws *WxService) groupSender(msg *openwechat.Message) error {
+func (ws *WxService) groupSender(msg *openwechat.Message) (bool, error) {
 	if !msg.IsSendByGroup() {
-		return errors.New("not send by group")
+		return false, nil
 	}
 	if msg.IsSendBySelf() {
-		return errors.New("msg send by self")
+		return true, nil
 	}
 	for _, f := range ws.groupSend {
-		if f(msg) == nil {
-			return nil
+		ok, err := f(msg)
+		if err != nil {
+			return true, err
+		}
+		if ok {
+			return true, nil
 		}
 	}
-	return errors.New("no such group request")
+	return true, errors.New("no such group request")
 }
 
-func (ws *WxService) friendSender(msg *openwechat.Message) error {
+func (ws *WxService) friendSender(msg *openwechat.Message) (bool, error) {
 	if !msg.IsSendByFriend() {
-		return errors.New("not send by friend")
+		return false, nil
 	}
 	if msg.IsSendBySelf() {
-		return errors.New("msg send by self")
+		return true, nil
 	}
 	for _, f := range ws.friendSend {
-		if f(msg) == nil {
-			return nil
+		ok, err := f(msg)
+		if err != nil {
+			return true, err
+		}
+		if ok {
+			return true, nil
 		}
 	}
-	return errors.New("no such friend request")
+	return true, errors.New("no such friend request")
 }
 
-func (ws *WxService) groupTextMsg(msg *openwechat.Message) error {
+func (ws *WxService) groupTextMsg(msg *openwechat.Message) (bool, error) {
 	if !msg.IsText() {
-		return errors.New("not text")
+		return false, nil
 	}
 	msg.Content = strings.TrimSpace(msg.Content)
 	if strings.HasPrefix(msg.Content, constant.LlmKeyWord) {
@@ -79,58 +87,74 @@ func (ws *WxService) groupTextMsg(msg *openwechat.Message) error {
 	} else if strings.HasSuffix(msg.Content, constant.LlmKeyWord) {
 		msg.Content = strings.TrimSpace(msg.Content[:len(msg.Content)-len(constant.LlmKeyWord)])
 	} else {
-		return errors.New("not groupTextMsg")
+		return false, nil
 	}
 	//把小写全部转为大写
 	msg.Content = lib.ProcessingCommands(msg.Content)
 	for _, f := range ws.WxLLMService.GetGroupTextProducer() {
-		if f(msg) == nil {
-			return nil
+		ok, err := f(msg)
+		if err != nil {
+			return true, err
+		}
+		if ok {
+			return true, nil
 		}
 	}
-	return errors.New("no such group text request")
+	return true, errors.New("no such group text request")
 }
 
-func (ws *WxService) groupImgMsg(msg *openwechat.Message) error {
+func (ws *WxService) groupImgMsg(msg *openwechat.Message) (bool, error) {
 	if !msg.IsPicture() {
-		return errors.New("not pic")
+		return false, errors.New("not pic")
 	}
 	for _, f := range ws.WxLLMService.GetGroupImgProducer() {
-		if f(msg) == nil {
-			return nil
+		ok, err := f(msg)
+		if err != nil {
+			return true, err
+		}
+		if ok {
+			return true, nil
 		}
 	}
-	return errors.New("no such group img request")
+	return true, errors.New("no such group img request")
 }
 
-func (ws *WxService) friendTextMsg(msg *openwechat.Message) error {
+func (ws *WxService) friendTextMsg(msg *openwechat.Message) (bool, error) {
 	if msg.IsSendBySelf() {
-		return errors.New("msg send by self")
+		return false, errors.New("msg send by self")
 	}
 	if !msg.IsText() {
-		return errors.New("not text")
+		return false, errors.New("not text")
 	}
 	msg.Content = strings.TrimSpace(msg.Content)
 	//把小写全部转为大写
 	msg.Content = lib.ProcessingCommands(msg.Content)
 	for _, f := range ws.WxLLMService.GetFriendTextProducer() {
-		if f(msg) == nil {
-			return nil
+		ok, err := f(msg)
+		if err != nil {
+			return true, err
+		}
+		if ok {
+			return true, nil
 		}
 	}
-	return errors.New("no such group img request")
+	return true, errors.New("no such group img request")
 }
 
-func (ws *WxService) friendImgMsg(msg *openwechat.Message) error {
+func (ws *WxService) friendImgMsg(msg *openwechat.Message) (bool, error) {
 	if !msg.IsPicture() {
-		return errors.New("not pic")
+		return false, errors.New("not pic")
 	}
 	for _, f := range ws.WxLLMService.GetFriendImgProducer() {
-		if f(msg) == nil {
-			return nil
+		ok, err := f(msg)
+		if err != nil {
+			return true, err
+		}
+		if ok {
+			return true, nil
 		}
 	}
-	return errors.New("no such user img request")
+	return true, errors.New("no such user img request")
 }
 func (ws *WxService) InitWxRobot() error {
 	// 注册登陆二维码回调
@@ -172,12 +196,22 @@ func (ws *WxService) InitWxRobot() error {
 		}
 		ws.Logln(logrus.InfoLevel, "user:", user.NickName, " msgContent:", msg.Content)
 		//对于不同的消息进行不同的处理
-		err = ws.friendSender(msg)
-		if err == nil {
+		ok, err := ws.friendSender(msg)
+		if err != nil {
+			ws.Logln(logrus.ErrorLevel, err.Error())
 			return
 		}
-		err = ws.groupSender(msg)
-
+		if ok {
+			return
+		}
+		ok, err = ws.groupSender(msg)
+		if err != nil {
+			ws.Logln(logrus.ErrorLevel, err.Error())
+			return
+		}
+		if ok {
+			return
+		}
 	}
 	//初始化WxCron
 	ws.WxCronService = wx_cron.NewWxCronService(wx_cron.SetWxCronServiceWxDao(ws.wxDao), wx_cron.SetWxCronServiceSourceDao(ws.sourceDao),
@@ -229,6 +263,7 @@ func (service *WxService) ReloadAndUpdateUserName() error {
 			}
 		}
 	}
+	service.Logln(logrus.InfoLevel, "init Success")
 	return nil
 }
 

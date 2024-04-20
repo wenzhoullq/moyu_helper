@@ -18,6 +18,8 @@ var Holidays []*holiday.Day
 var ToolMap map[string]string
 var ToolReplySuf map[string]string
 var KeyMap map[string]string
+var AdMap map[time.Weekday]string
+var ModeMap map[string]struct{}
 
 func InitCommon() error {
 	client := client.NewQianFanClient()
@@ -36,7 +38,23 @@ func InitCommon() error {
 	}
 	err = InitKeyMap()
 	if err != nil {
+		return err
+	}
+	err = InitAd()
+	if err != nil {
+		return err
+	}
+	err = InitModeMap()
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
+func InitModeMap() error {
+	ModeMap = map[string]struct{}{
+		constant.NorMalModeChat: {},
+		constant.AoJiaoModeChat: {},
 	}
 	return nil
 }
@@ -45,6 +63,19 @@ func InitKeyMap() error {
 	KeyMap = map[string]string{
 		constant.TxSecretId:  os.Getenv(constant.TxSecretId),
 		constant.TxSecretKey: os.Getenv(constant.TxSecretKey),
+	}
+	return nil
+}
+
+func InitAd() error {
+	AdMap = map[time.Weekday]string{
+		time.Sunday:    "",
+		time.Monday:    "",
+		time.Tuesday:   "",
+		time.Wednesday: constant.WednesdayAd,
+		time.Thursday:  "",
+		time.Friday:    "",
+		time.Saturday:  "",
 	}
 	return nil
 }

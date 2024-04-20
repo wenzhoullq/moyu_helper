@@ -1,12 +1,11 @@
 package client
 
 import (
-	"fmt"
 	"testing"
 	"weixin_LLM/dto/chat"
 )
 
-func TestErnie8KChat(t *testing.T) {
+func TestBaZongChat(t *testing.T) {
 	err := initTest("../../../config/configTest.toml")
 	if err != nil {
 		t.Error(err)
@@ -18,15 +17,15 @@ func TestErnie8KChat(t *testing.T) {
 		t.Error(err)
 		panic(err)
 	}
-	EClient := NewErnie8KClient(SetToken(token))
-	msgConetent := append(make([]*chat.ChatForm, 0), &chat.ChatForm{
+	EClient := NewBaDaoClient(SetBaDaoToken(token))
+	msgContent := append(make([]*chat.ChatForm, 0), &chat.ChatForm{
 		Role:    "user",
-		Content: "你是傻逼",
+		Content: "描述下霸道总裁吗",
 	})
-	res, err := EClient.Chat(msgConetent)
+	res, err := EClient.ChatToBaZong(msgContent)
 	if err != nil {
 		t.Error(err)
 		panic(err)
 	}
-	fmt.Println(res)
+	t.Log(res)
 }

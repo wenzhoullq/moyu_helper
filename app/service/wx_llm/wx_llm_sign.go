@@ -14,12 +14,12 @@ import (
 	"weixin_LLM/lib/constant"
 )
 
-func (service *WxLLMService) signProducer(msg *openwechat.Message) error {
+func (service *WxLLMService) signProducer(msg *openwechat.Message) (bool, error) {
 	if msg.Content != constant.SignKeyWord {
-		return errors.New("not signOperator")
+		return false, nil
 	}
 	service.signChan <- msg
-	return nil
+	return true, nil
 }
 
 func (service *WxLLMService) signProcess(msg *openwechat.Message) error {

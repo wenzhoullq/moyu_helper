@@ -4,6 +4,8 @@ server_addr = ":8088"
 [qianfan_configure]
 api_key = "m6bNKukqRPWVSzonj08C1U4G"
 secret_key = "D6ltUdRFjgf4rbN72WlqDOHtlF4yfhXa"
+aojiao_key = "bce-v3/ALTAK-b51dLBazqndSeD9CPfWzB/a66ab8b9502d62179f3fda0e582bb6eb25519a69"
+aojiao_appid = "e566ffdb-bb7f-445a-b0b7-6bd805e3abd1"
 
 [redis_configure]
 host = "127.0.0.1"
@@ -25,8 +27,8 @@ log_file_path = "../log/"
 log_file_name = "system.log"
 
 [sign_configure]
-sign_reward_first = 300
-sign_reward_second = 200
+sign_reward_first = 200
+sign_reward_second = 150
 sign_reward_third = 100
 sign_reward_else = 50
 sign_mark = "sign"

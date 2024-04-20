@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	source2 "weixin_LLM/dto/source"
 	"weixin_LLM/dto/user"
 	"weixin_LLM/init/config"
 	"weixin_LLM/init/log"
@@ -21,7 +22,7 @@ func InitDB() (err error) {
 	if err != nil {
 		return err
 	}
-	DB.AutoMigrate(&user.User{})
+	DB.AutoMigrate(&user.User{}, &source2.Source{})
 	DB.SetLogger(log.Logger)
 	DB.LogMode(true)
 	return nil

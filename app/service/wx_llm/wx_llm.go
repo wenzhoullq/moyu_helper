@@ -15,6 +15,7 @@ import (
 type WxLLMService struct {
 	*client.Ernie8KClient
 	*client.TxCloudClient
+	*client.AoJiaoClient
 	*logrus.Logger
 	signChan            chan *openwechat.Message
 	friendTextToImgChan chan *openwechat.Message
@@ -25,21 +26,24 @@ type WxLLMService struct {
 	replyImgChan        chan *reply.ImgReply
 	updateChan          chan struct{}
 	//生产者回调函数
-	groupTextProducer  []func(*openwechat.Message) error
-	groupImgProducer   []func(*openwechat.Message) error
-	friendTextProducer []func(*openwechat.Message) error
-	friendImgProducer  []func(*openwechat.Message) error
-	wxDao              *dao.WxDao
-	self               *openwechat.Self
-	groups             openwechat.Groups
-	friends            openwechat.Friends
-	signLock           *sync.Mutex
+	groupTextProducer  []func(*openwechat.Message) (bool, error)
+	groupImgProducer   []func(*openwechat.Message) (bool, error)
+	friendTextProducer []func(*openwechat.Message) (bool, error)
+	friendImgProducer  []func(*openwechat.Message) (bool, error)
+	//对话模式
+	GroupChatModel map[string]func(*openwechat.Message, *openwechat.User) error
+	wxDao          *dao.WxDao
+	self           *openwechat.Self
+	groups         openwechat.Groups
+	friends        openwechat.Friends
+	signLock       *sync.Mutex
 }
 
 func NewWxLLMService(ops ...func(c *WxLLMService)) *WxLLMService {
 	service := &WxLLMService{
 		Ernie8KClient:       client.NewErnie8KClient(client.SetToken(common.Token)),
 		TxCloudClient:       client.NewTxCloudClient(),
+		AoJiaoClient:        client.NewAoJiaoClient(),
 		signChan:            make(chan *openwechat.Message, constant.SignMaxNum),
 		friendTextToImgChan: make(chan *openwechat.Message, constant.ReplyPicMaxNum),
 		groupTextToImgChan:  make(chan *openwechat.Message, constant.ReplyPicMaxNum),
@@ -50,10 +54,15 @@ func NewWxLLMService(ops ...func(c *WxLLMService)) *WxLLMService {
 		updateChan:          make(chan struct{}, constant.UpdateMaxNum),
 		signLock:            &sync.Mutex{},
 	}
-	service.friendTextProducer = []func(*openwechat.Message) error{service.toolsProcess, service.friendImgToImgMark, service.friendTextToImg, service.friendChatProcess}
-	service.friendImgProducer = []func(*openwechat.Message) error{service.friendImgToImgProducer}
-	service.groupTextProducer = []func(*openwechat.Message) error{service.signProducer, service.toolsProcess, service.groupImgToImgMark, service.groupTextToImg, service.groupChatProcess}
-	service.groupImgProducer = []func(*openwechat.Message) error{service.groupImgToImgProducer}
+	service.friendTextProducer = []func(*openwechat.Message) (bool, error){service.toolsProcess, service.friendImgToImgMark, service.friendTextToImg, service.friendChatProcess}
+	service.friendImgProducer = []func(*openwechat.Message) (bool, error){service.friendImgToImgProducer}
+	service.groupTextProducer = []func(*openwechat.Message) (bool, error){service.signProducer, service.toolsProcess, service.ModeChangeMark, service.groupImgToImgMark, service.groupTextToImg, service.groupChatProcess}
+	service.groupImgProducer = []func(*openwechat.Message) (bool, error){service.groupImgToImgProducer}
+	service.GroupChatModel = map[string]func(*openwechat.Message, *openwechat.User) error{
+		constant.NorMalModeChat: service.NormalChatProcess,
+		constant.AoJiaoModeChat: service.AoJiaoChatProcess,
+	}
+
 	for _, op := range ops {
 		op(service)
 	}
@@ -66,19 +75,19 @@ func SetWxDao(wxDao *dao.WxDao) func(ws *WxLLMService) {
 	}
 }
 
-func (service *WxLLMService) GetGroupTextProducer() []func(*openwechat.Message) error {
+func (service *WxLLMService) GetGroupTextProducer() []func(*openwechat.Message) (bool, error) {
 	return service.groupTextProducer
 }
 
-func (service *WxLLMService) GetGroupImgProducer() []func(*openwechat.Message) error {
+func (service *WxLLMService) GetGroupImgProducer() []func(*openwechat.Message) (bool, error) {
 	return service.groupImgProducer
 }
 
-func (service *WxLLMService) GetFriendTextProducer() []func(*openwechat.Message) error {
+func (service *WxLLMService) GetFriendTextProducer() []func(*openwechat.Message) (bool, error) {
 	return service.friendTextProducer
 }
 
-func (service *WxLLMService) GetFriendImgProducer() []func(*openwechat.Message) error {
+func (service *WxLLMService) GetFriendImgProducer() []func(*openwechat.Message) (bool, error) {
 	return service.friendImgProducer
 }
 

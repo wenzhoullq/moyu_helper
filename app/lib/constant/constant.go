@@ -12,10 +12,11 @@ const (
 )
 
 const (
-	LlmKeyWord       = "@摸鱼小助手"
-	SignKeyWord      = "签到"
-	ImgToImgKeyWord  = "风格转换"
-	TextToImgKeyWord = "画"
+	LlmKeyWord        = "@摸鱼小助手"
+	SignKeyWord       = "签到"
+	ImgToImgKeyWord   = "风格转换"
+	TextToImgKeyWord  = "画"
+	ModeChangeKeyWord = "切换"
 )
 
 const (
@@ -31,16 +32,23 @@ const (
 	ImgReplyFriend                  = "图片正在生成中,请稍等..."
 	ImgGoldConsumeReply             = "图片生成成功!\n剩余金币数量:%d枚"
 	ReplyPre                        = "你想要的是否是:\n"
-	PDFSuf                          = "\n全能免费PDF工具，无广告，随时处理PDF。"
-	FlowSuf                         = "\n2月1日-4月30日，移动用户登陆页面可领取2张2GB流量日包券，1张7天有效，1张30天有效，每个用户每月可领1次。"
 	NewsSuf                         = "【摸鱼小助手】提醒您:三点几了饮茶先啦🥤。\n这里是今天的摸鱼小新闻,祝各位摸鱼人摸鱼愉快！\n"
 	GoldPriceNews                   = "今日黄金价格:%s元/克"
 	ForbidDirty                     = "善言结善缘,恶语伤人心。你这一句话我需要花60秒来治愈自己😭😭"
 	ExDailyMAXFreeImgTransTimeReply = "今日免费生图功能次数已用完,请明日再来使用"
+	HolidayTip                      = "【摸鱼小助手】提醒您:各位摸鱼人上午好🌹！\n工作再累，一定不要忘记摸🐟！有事没事起身去茶水间、去厕所、去廊道走走，别老在工位上坐着，💴是老板的，但命是自己的！\n"
+	WednesdayAd                     = "今日领取美团红包必得9元红包。\n"
+	ModeChatSet                     = "已切换为%s模式"
+	ModeChatSetFail                 = "无该模式"
 )
 const (
 	SignSuccess = 0
 	SignFail    = 1
+)
+
+const (
+	NorMalModeChat = "正常"
+	AoJiaoModeChat = "傲娇"
 )
 
 const (
@@ -61,15 +69,11 @@ const (
 	ForbidForProfanity       = 60
 	ImgToImgMark             = "imgToImg:"
 	FriendImgToImgMark       = "friendImgToImg:"
-	FriendTextToImgMark      = "friendImgToImg:"
+	ChatMode                 = "ChatMode:"
+	ChatModeExp              = 60 * 5
 	ImgExp                   = 60 * 2
 	ImgGoldConsume           = 15
 	DailyMAXFreeImgTransTime = 3 //每日生图功能额度
-)
-
-const (
-	PDF  = "https://tools.pdf24.org/zh/"
-	Flow = "https://wx.10086.cn/qwhdhub/leadin/1024013102?A_C_CODE=Q0NXXsZMFT&channelId=P00000016916#/"
 )
 
 const (

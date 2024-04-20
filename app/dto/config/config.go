@@ -55,9 +55,11 @@ type MysqlConfigure struct {
 }
 
 type QianFanConfigure struct {
-	ApiKey    string `toml:"api_key"`
-	SecretKey string `toml:"secret_key"`
-	AccessKey string `toml:"access_key"`
+	ApiKey      string `toml:"api_key"`
+	SecretKey   string `toml:"secret_key"`
+	AccessKey   string `toml:"access_key"`
+	AoJiaoKey   string `toml:"aojiao_key"`
+	AojiaoAppId string `toml:"aojiao_appid"`
 }
 
 type TanshuConfigure struct {

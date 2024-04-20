@@ -2,6 +2,7 @@ package wx_llm
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/eatmoreapple/openwechat"
 	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
@@ -9,6 +10,7 @@ import (
 	"weixin_LLM/dto/chat"
 	"weixin_LLM/dto/reply"
 	"weixin_LLM/dto/response"
+	"weixin_LLM/init/common"
 	"weixin_LLM/lib/constant"
 )
 
@@ -42,6 +44,8 @@ func (service *WxLLMService) StoreChat(key, resp string, llmReq []*chat.ChatForm
 		Role:    "assistant",
 		Content: resp,
 	})
+	//只保存上一轮对话
+	llmReq = llmReq[:len(llmReq)-2]
 	res, err := json.Marshal(&llmReq)
 	if err != nil {
 		return err
@@ -81,37 +85,108 @@ func (service *WxLLMService) Forbid(resp *response.Ernie8kResponse, key string, 
 	return false, nil
 }
 
-func (service *WxLLMService) friendChatProcess(msg *openwechat.Message) error {
+func (service *WxLLMService) friendChatProcess(msg *openwechat.Message) (bool, error) {
 	user, err := msg.Sender()
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return err
+		return true, err
 	}
-	err = service.chatProcess(msg, user)
+	err = service.NormalChatProcess(msg, user)
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return err
+		return true, err
 	}
 	service.Logln(logrus.InfoLevel, user.NickName, " chat")
-	return nil
+	return true, nil
 }
 
-func (service *WxLLMService) groupChatProcess(msg *openwechat.Message) error {
+func (service *WxLLMService) getChatModeKey(user *openwechat.User) string {
+	return fmt.Sprintf("%s:%s", constant.ChatMode, user.UserName)
+}
+
+func (service *WxLLMService) ModeChangeMark(msg *openwechat.Message) (bool, error) {
+	if !strings.HasPrefix(msg.Content, constant.ModeChangeKeyWord) {
+		return false, nil
+	}
 	user, err := msg.SenderInGroup()
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return err
+		return true, err
 	}
-	err = service.chatProcess(msg, user)
+	key := service.getChatModeKey(user)
+	for k, _ := range common.ModeMap {
+		if !strings.Contains(msg.Content, k) {
+			continue
+		}
+		//将标记插入redis
+		service.wxDao.SetString(key, k, constant.ChatModeExp)
+		//发送切换成功
+		service.replyTextChan <- &reply.Reply{
+			Message: msg,
+			Content: fmt.Sprintf(constant.ModeChatSet, k),
+		}
+		return true, nil
+	}
+	//回复无该模式
+	service.replyTextChan <- &reply.Reply{
+		Message: msg,
+		Content: constant.ModeChatSetFail,
+	}
+	return true, nil
+}
+
+func (service *WxLLMService) groupChatProcess(msg *openwechat.Message) (bool, error) {
+	user, err := msg.SenderInGroup()
 	if err != nil {
-		service.Logln(logrus.ErrorLevel, err.Error())
-		return err
+		return true, err
+	}
+	//根据不同模式进行不同的对话
+	key := service.getChatModeKey(user)
+	value, err := service.wxDao.GetString(key)
+	if err != nil {
+		if err != redis.Nil {
+			return true, err
+		}
+		value = constant.NorMalModeChat
+	}
+	err = service.GroupChatModel[value](msg, user)
+	if err != nil {
+		return true, err
 	}
 	service.Logln(logrus.InfoLevel, user.NickName, " chat")
+	return true, nil
+}
+
+func (service *WxLLMService) AoJiaoChatProcess(msg *openwechat.Message, user *openwechat.User) error {
+	forbidKey := constant.Forbid + user.UserName
+	value, err := service.wxDao.GetString(forbidKey)
+	if err != nil {
+		if err != redis.Nil {
+			return err
+		}
+	}
+	// 该用户还在被封禁
+	if value != "" {
+		return nil
+	}
+	resp, err := service.AoJiaoClient.Chat(msg.Content)
+	if err != nil {
+		return err
+	}
+	//封禁
+	forbid, err := service.Forbid(&response.Ernie8kResponse{Result: resp}, forbidKey, msg)
+	if err != nil {
+		return err
+	}
+	if forbid {
+		return nil
+	}
+	service.replyTextChan <- &reply.Reply{
+		Content: resp,
+		Message: msg,
+	}
+	service.Logln(logrus.InfoLevel, user.NickName, "llmProcess success")
 	return nil
 }
 
-func (service *WxLLMService) chatProcess(msg *openwechat.Message, user *openwechat.User) error {
+func (service *WxLLMService) NormalChatProcess(msg *openwechat.Message, user *openwechat.User) error {
 	forbidKey := constant.Forbid + user.UserName
 	value, err := service.wxDao.GetString(forbidKey)
 	if err != nil {
@@ -128,7 +203,7 @@ func (service *WxLLMService) chatProcess(msg *openwechat.Message, user *openwech
 	if err != nil {
 		return err
 	}
-	resp, err := service.Chat(chatReq)
+	resp, err := service.Ernie8KClient.Chat(chatReq)
 	if err != nil {
 		return err
 	}
@@ -150,7 +225,7 @@ func (service *WxLLMService) chatProcess(msg *openwechat.Message, user *openwech
 		if err != nil {
 			return err
 		}
-		resp, err = service.Chat(chatReq)
+		resp, err = service.Ernie8KClient.Chat(chatReq)
 		if err != nil {
 			return err
 		}
@@ -160,11 +235,10 @@ func (service *WxLLMService) chatProcess(msg *openwechat.Message, user *openwech
 			return err
 		}
 	}
-	reply := &reply.Reply{
+	service.replyTextChan <- &reply.Reply{
 		Content: resp.Result,
 		Message: msg,
 	}
-	service.replyTextChan <- reply
 	service.Logln(logrus.InfoLevel, user.NickName, "llmProcess success")
 	return nil
 }
