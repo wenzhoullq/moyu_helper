@@ -32,6 +32,7 @@ type WxLLMService struct {
 	friendImgProducer  []func(*openwechat.Message) (bool, error)
 	//对话模式
 	GroupChatModel map[string]func(*openwechat.Message, *openwechat.User) error
+	ForbidChat     map[string]string
 	wxDao          *dao.WxDao
 	self           *openwechat.Self
 	groups         openwechat.Groups
@@ -56,13 +57,16 @@ func NewWxLLMService(ops ...func(c *WxLLMService)) *WxLLMService {
 	}
 	service.friendTextProducer = []func(*openwechat.Message) (bool, error){service.toolsProcess, service.friendImgToImgMark, service.friendTextToImg, service.friendChatProcess}
 	service.friendImgProducer = []func(*openwechat.Message) (bool, error){service.friendImgToImgProducer}
-	service.groupTextProducer = []func(*openwechat.Message) (bool, error){service.signProducer, service.toolsProcess, service.ModeChangeMark, service.groupImgToImgMark, service.groupTextToImg, service.groupChatProcess}
+	service.groupTextProducer = []func(*openwechat.Message) (bool, error){service.signProducer, service.toolsProcess, service.groupImgToImgMark, service.groupTextToImg, service.ModeChangeMark, service.groupChatProcess}
 	service.groupImgProducer = []func(*openwechat.Message) (bool, error){service.groupImgToImgProducer}
 	service.GroupChatModel = map[string]func(*openwechat.Message, *openwechat.User) error{
 		constant.NorMalModeChat: service.NormalChatProcess,
 		constant.AoJiaoModeChat: service.AoJiaoChatProcess,
 	}
-
+	service.ForbidChat = map[string]string{
+		constant.NorMalModeChat: constant.NorMalModeForbidDirty,
+		constant.AoJiaoModeChat: constant.AoJiaoModelForbidDirty,
+	}
 	for _, op := range ops {
 		op(service)
 	}

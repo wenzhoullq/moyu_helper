@@ -5,20 +5,20 @@ import (
 	"weixin_LLM/init/config"
 )
 
-type AoJiaoClient struct {
+type HelperClient struct {
 	*appbuilder.AgentBuilder
 }
 
-func NewAoJiaoClient() *AoJiaoClient {
+func NewHelperClient() *HelperClient {
 	conf, _ := appbuilder.NewSDKConfig("", config.Config.AppBuilderKey)
-	agent, _ := appbuilder.NewAgentBuilder(config.Config.AojiaoAppId, conf)
-	client := &AoJiaoClient{
+	agent, _ := appbuilder.NewAgentBuilder(config.Config.NorMalAppId, conf)
+	client := &HelperClient{
 		AgentBuilder: agent,
 	}
 	return client
 }
 
-func (client *AoJiaoClient) Chat(query string) (string, error) {
+func (client *HelperClient) Chat(query string) (string, error) {
 	conversationID, err := client.AgentBuilder.CreateConversation()
 	if err != nil {
 		return "", err

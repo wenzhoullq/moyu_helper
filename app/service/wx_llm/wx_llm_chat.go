@@ -2,6 +2,7 @@ package wx_llm
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/eatmoreapple/openwechat"
 	"github.com/go-redis/redis/v8"
@@ -9,7 +10,6 @@ import (
 	"strings"
 	"weixin_LLM/dto/chat"
 	"weixin_LLM/dto/reply"
-	"weixin_LLM/dto/response"
 	"weixin_LLM/init/common"
 	"weixin_LLM/lib/constant"
 )
@@ -56,19 +56,11 @@ func (service *WxLLMService) StoreChat(key, resp string, llmReq []*chat.ChatForm
 	}
 	return nil
 }
-func (service *WxLLMService) Forbid(resp *response.Ernie8kResponse, key string, msg *openwechat.Message) (bool, error) {
-	//内容有违法,不接受该用户半小时的发言
-	if resp.Flag != constant.RESP_NORMAL || resp.NeedClearHistory {
-		err := service.wxDao.SetString(key, msg.Content, constant.ForbidForPolitics)
-		if err != nil {
-			return false, err
-		}
-		return true, nil
-	}
+func (service *WxLLMService) Forbid(content, modeType, key string, msg *openwechat.Message) (bool, error) {
 	dirtyWords := []string{"粗鲁", "不礼貌", "侮辱"}
 	//脏话封禁
 	for _, word := range dirtyWords {
-		if !strings.Contains(resp.Result, word) {
+		if !strings.Contains(content, word) {
 			continue
 		}
 		err := service.wxDao.SetString(key, msg.Content, constant.ForbidForProfanity)
@@ -76,7 +68,7 @@ func (service *WxLLMService) Forbid(resp *response.Ernie8kResponse, key string, 
 			return false, err
 		}
 		reply := &reply.Reply{
-			Content: constant.ForbidDirty,
+			Content: service.ForbidChat[modeType],
 			Message: msg,
 		}
 		service.replyTextChan <- reply
@@ -154,6 +146,21 @@ func (service *WxLLMService) groupChatProcess(msg *openwechat.Message) (bool, er
 	return true, nil
 }
 
+func (service *WxLLMService) ChatProcess(msg *openwechat.Message, user *openwechat.User) error {
+	forbidKey := constant.Forbid + user.UserName
+	value, err := service.wxDao.GetString(forbidKey)
+	if err != nil {
+		if err != redis.Nil {
+			return err
+		}
+	}
+	// 该用户还在被封禁
+	if value != "" {
+		return nil
+	}
+	return nil
+}
+
 func (service *WxLLMService) AoJiaoChatProcess(msg *openwechat.Message, user *openwechat.User) error {
 	forbidKey := constant.Forbid + user.UserName
 	value, err := service.wxDao.GetString(forbidKey)
@@ -171,7 +178,7 @@ func (service *WxLLMService) AoJiaoChatProcess(msg *openwechat.Message, user *op
 		return err
 	}
 	//封禁
-	forbid, err := service.Forbid(&response.Ernie8kResponse{Result: resp}, forbidKey, msg)
+	forbid, err := service.Forbid(resp, constant.AoJiaoModeChat, forbidKey, msg)
 	if err != nil {
 		return err
 	}
@@ -207,8 +214,16 @@ func (service *WxLLMService) NormalChatProcess(msg *openwechat.Message, user *op
 	if err != nil {
 		return err
 	}
+	//内容有违法,不接受该用户半小时的发言
+	if resp.Flag != constant.RESP_NORMAL || resp.NeedClearHistory {
+		err := service.wxDao.SetString(key, msg.Content, constant.ForbidForPolitics)
+		if err != nil {
+			return err
+		}
+		return errors.New("forbid for politics")
+	}
 	//封禁
-	forbid, err := service.Forbid(resp, forbidKey, msg)
+	forbid, err := service.Forbid(resp.Result, constant.NorMalModeChat, forbidKey, msg)
 	if err != nil {
 		return err
 	}

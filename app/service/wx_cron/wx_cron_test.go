@@ -15,11 +15,11 @@ func TestWxCron(t *testing.T) {
 	service.SendHolidayTips()
 }
 func initConfig() error {
-	err := config.ConfigInit("../../config/configTest.toml")
+	err := config.ConfigInit("../../../config/configTest.toml")
 	if err != nil {
 		return err
 	}
-	err = common.InitHoliday("../../file/holiday2024.json")
+	err = common.InitHoliday("../../../file/holiday2024.json")
 	if err != nil {
 		return err
 	}
@@ -33,4 +33,13 @@ func TestWorkDay(t *testing.T) {
 	}
 	service := NewWxCronService()
 	t.Log(service.isWorkDay())
+}
+
+func TestZhiHuTopic(t *testing.T) {
+	err := initConfig()
+	if err != nil {
+		panic(err)
+	}
+	service := NewWxCronService()
+	service.SendNews()
 }

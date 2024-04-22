@@ -24,34 +24,13 @@ type Ernie8kResponse struct {
 	BanRound         int    `json:"ban_round"`
 }
 
-type GoldResponse struct {
-	Code int    `json:"code"`
-	Msg  string `json:"msg"`
-	Data struct {
-		List []*struct {
-			Type             string `json:"type"`
-			Typename         string `json:"typename"`
-			Price            string `json:"price"`
-			OpeningPrice     string `json:"openingprice"`
-			MaxPrice         string `json:"maxprice"`
-			MinPrice         string `json:"minprice"`
-			ChangePercent    string `json:"changepercent"`
-			LastClosingPrice string `json:"lastclosingprice"`
-			TradeAmount      string `json:"tradeamount"`
-			UpdateTime       string `json:"updatetime"`
-		} `json:"list"`
-	} `json:"data"`
-}
-
-type NewsResp struct {
-	Code int    `json:"code"`
-	Msg  string `json:"msg"`
-	Data struct {
-		Channel string `json:"channel"`
-		Num     int    `json:"num"`
-		List    []struct {
+type ZhiHuTopicResponse struct {
+	Data []struct {
+		Target struct {
 			Title string `json:"title"`
-		} `json:"list"`
+			URL   string `json:"url"`
+		} `json:"target"`
+		DetailText string `json:"detail_text"`
 	} `json:"data"`
 }
 

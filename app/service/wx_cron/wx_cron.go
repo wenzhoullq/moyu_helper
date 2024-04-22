@@ -17,7 +17,7 @@ type WxCronService struct {
 	*openwechat.Bot
 	*logrus.Logger
 	groups openwechat.Groups
-	*client.TanshuClient
+	*client.ZhiHuClient
 	wxDao     *dao.WxDao
 	sourceDao *dao.SourceDao
 	self      *openwechat.Self
@@ -25,7 +25,7 @@ type WxCronService struct {
 
 func NewWxCronService(ops ...func(*WxCronService)) *WxCronService {
 	service := &WxCronService{
-		TanshuClient: client.NewTanshuClient(),
+		ZhiHuClient: client.NewZhiHuClient(),
 	}
 	for _, op := range ops {
 		op(service)
@@ -150,21 +150,16 @@ func (service *WxCronService) SendNews() {
 	newsPre := constant.NewsSuf
 	newsSuf := ""
 
-	todayNews, err := service.GetNews()
+	hotTopic, err := service.GetHotTopic()
 	if err != nil {
 		service.Log(logrus.ErrorLevel, err)
 		return
 	}
-	//添加金价新闻
-	goldPrice, err := service.GetGoldPrice()
-	if err != nil {
-		service.Log(logrus.ErrorLevel, err)
-		return
-	}
-	goldNews := fmt.Sprintf(constant.GoldPriceNews, goldPrice)
-	todayNews = append([]string{goldNews}, todayNews...)
-	for i, v := range todayNews {
-		newsSuf += fmt.Sprintf("%d.%s。\n", i+1, v)
+	for i, v := range hotTopic.Data {
+		if i >= constant.MaxNewsNum {
+			break
+		}
+		newsSuf += fmt.Sprintf("%d.%s   %s🔥。\n %s \n", i+1, v.Target.Title, v.DetailText, v.Target.URL)
 	}
 	news := newsPre + newsSuf
 	for _, group := range service.groups {

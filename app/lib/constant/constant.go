@@ -34,7 +34,8 @@ const (
 	ReplyPre                        = "你想要的是否是:\n"
 	NewsSuf                         = "【摸鱼小助手】提醒您:三点几了饮茶先啦🥤。\n这里是今天的摸鱼小新闻,祝各位摸鱼人摸鱼愉快！\n"
 	GoldPriceNews                   = "今日黄金价格:%s元/克"
-	ForbidDirty                     = "善言结善缘,恶语伤人心。你这一句话我需要花60秒来治愈自己😭😭"
+	NorMalModeForbidDirty           = "善言结善缘,恶语伤人心。你这一句话我需要花60秒来治愈自己😭😭"
+	AoJiaoModelForbidDirty          = "你说话太没有礼貌了,我不想跟你说话了!"
 	ExDailyMAXFreeImgTransTimeReply = "今日免费生图功能次数已用完,请明日再来使用"
 	HolidayTip                      = "【摸鱼小助手】提醒您:各位摸鱼人上午好🌹！\n工作再累，一定不要忘记摸🐟！有事没事起身去茶水间、去厕所、去廊道走走，别老在工位上坐着，💴是老板的，但命是自己的！\n"
 	WednesdayAd                     = "今日领取美团红包必得9元红包。\n"
@@ -56,8 +57,7 @@ const (
 )
 
 const (
-	NewsNum       = "4"
-	TanshuSuccess = 1
+	MaxNewsNum = 5
 )
 
 const (

@@ -4,8 +4,9 @@ server_addr = ":8088"
 [qianfan_configure]
 api_key = "m6bNKukqRPWVSzonj08C1U4G"
 secret_key = "D6ltUdRFjgf4rbN72WlqDOHtlF4yfhXa"
-aojiao_key = "bce-v3/ALTAK-b51dLBazqndSeD9CPfWzB/a66ab8b9502d62179f3fda0e582bb6eb25519a69"
+app_builder_key = "bce-v3/ALTAK-b51dLBazqndSeD9CPfWzB/a66ab8b9502d62179f3fda0e582bb6eb25519a69"
 aojiao_appid = "e566ffdb-bb7f-445a-b0b7-6bd805e3abd1"
+normal_appid = "7f9db346-f12c-4e2e-971c-9c6ac95fb7bc"
 
 [redis_configure]
 host = "127.0.0.1"
@@ -41,9 +42,6 @@ img_file = "../file/img/"
 holiday_tips = "0 10 10 * *"
 news_tips = "0 0 15 * *"
 regular_update = "0 10 0 * *"
-
-[tanshu_configure]
-key = "216dd7ab6ec94a85194b82655c540acc"
 
 [tx_configure]
 secret_id = "AKID2DKct6Y8e5VwIlJrWIwnbLB4yz9OlKFC"

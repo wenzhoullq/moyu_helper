@@ -4,23 +4,21 @@ import (
 	"testing"
 )
 
-func TestTanshu(t *testing.T) {
+func TestNorMalChat(t *testing.T) {
 	err := initTest("../../../config/configTest.toml")
 	if err != nil {
 		t.Error(err)
 		panic(err)
 	}
-	client := NewTanshuClient()
-	goldPrice, err := client.GetGoldPrice()
+	client := NewHelperClient()
 	if err != nil {
 		t.Error(err)
 		panic(err)
 	}
-	t.Log(goldPrice)
-	news, err := client.GetNews()
+	ans, err := client.Chat("金币有什么用")
 	if err != nil {
 		t.Error(err)
 		panic(err)
 	}
-	t.Log(news)
+	t.Log(ans)
 }

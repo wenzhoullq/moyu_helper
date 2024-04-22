@@ -4,21 +4,19 @@ import (
 	"testing"
 )
 
-func TestAoJiaoChat(t *testing.T) {
+func TestHotTopic(t *testing.T) {
 	err := initTest("../../../config/configTest.toml")
 	if err != nil {
 		t.Error(err)
 		panic(err)
 	}
-	client := NewAoJiaoClient()
+	client := NewZhiHuClient()
+	topic, err := client.GetHotTopic()
 	if err != nil {
 		t.Error(err)
 		panic(err)
 	}
-	ans, err := client.Chat("你好蠢")
-	if err != nil {
-		t.Error(err)
-		panic(err)
+	for _, v := range topic.Data {
+		t.Log(v)
 	}
-	t.Log(ans)
 }
