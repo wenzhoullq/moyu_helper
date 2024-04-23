@@ -28,6 +28,8 @@ type WxLLMService struct {
 	//生产者回调函数
 	groupTextProducer  []func(*openwechat.Message) (bool, error)
 	groupImgProducer   []func(*openwechat.Message) (bool, error)
+	groupGameProducer  []func(*openwechat.Message) (bool, error)
+	groupMarkProducer  []func(*openwechat.Message) (bool, error)
 	friendTextProducer []func(*openwechat.Message) (bool, error)
 	friendImgProducer  []func(*openwechat.Message) (bool, error)
 	//对话模式
@@ -55,10 +57,12 @@ func NewWxLLMService(ops ...func(c *WxLLMService)) *WxLLMService {
 		updateChan:          make(chan struct{}, constant.UpdateMaxNum),
 		signLock:            &sync.Mutex{},
 	}
-	service.friendTextProducer = []func(*openwechat.Message) (bool, error){service.toolsProcess, service.friendImgToImgMark, service.friendTextToImg, service.friendChatProcess}
-	service.friendImgProducer = []func(*openwechat.Message) (bool, error){service.friendImgToImgProducer}
-	service.groupTextProducer = []func(*openwechat.Message) (bool, error){service.signProducer, service.toolsProcess, service.groupImgToImgMark, service.groupTextToImg, service.ModeChangeMark, service.groupChatProcess}
-	service.groupImgProducer = []func(*openwechat.Message) (bool, error){service.groupImgToImgProducer}
+	service.friendTextProducer = []func(*openwechat.Message) (bool, error){service.tools, service.friendImgToImgMark, service.friendTextToImg, service.friendChat}
+	service.friendImgProducer = []func(*openwechat.Message) (bool, error){service.friendImgToImg}
+	service.groupTextProducer = []func(*openwechat.Message) (bool, error){service.game, service.tools, service.groupMark, service.groupTextToImg, service.groupChat}
+	service.groupImgProducer = []func(*openwechat.Message) (bool, error){service.groupImgToImg}
+	service.groupGameProducer = []func(message *openwechat.Message) (bool, error){service.sign}
+	service.groupMarkProducer = []func(message *openwechat.Message) (bool, error){service.groupImgToImgMark, service.ModeChangeMark}
 	service.GroupChatModel = map[string]func(*openwechat.Message, *openwechat.User) error{
 		constant.NorMalModeChat: service.NormalChatProcess,
 		constant.AoJiaoModeChat: service.AoJiaoChatProcess,

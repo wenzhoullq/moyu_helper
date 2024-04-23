@@ -14,7 +14,20 @@ import (
 	"weixin_LLM/lib/constant"
 )
 
-func (service *WxLLMService) signProducer(msg *openwechat.Message) (bool, error) {
+func (service *WxLLMService) game(msg *openwechat.Message) (bool, error) {
+	for _, f := range service.groupGameProducer {
+		ok, err := f(msg)
+		if err != nil {
+			return true, err
+		}
+		if ok {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (service *WxLLMService) sign(msg *openwechat.Message) (bool, error) {
 	if msg.Content != constant.SignKeyWord {
 		return false, nil
 	}

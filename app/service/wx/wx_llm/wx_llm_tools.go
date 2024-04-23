@@ -7,7 +7,7 @@ import (
 	"weixin_LLM/lib/constant"
 )
 
-func (service *WxLLMService) toolsProcess(msg *openwechat.Message) (bool, error) {
+func (service *WxLLMService) tools(msg *openwechat.Message) (bool, error) {
 	if _, ok := common.ToolMap[msg.Content]; !ok {
 		return false, nil
 	}

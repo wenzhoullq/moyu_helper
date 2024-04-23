@@ -11,6 +11,7 @@ import (
 	"weixin_LLM/dto/chat"
 	"weixin_LLM/dto/reply"
 	"weixin_LLM/init/common"
+	"weixin_LLM/lib"
 	"weixin_LLM/lib/constant"
 )
 
@@ -44,8 +45,8 @@ func (service *WxLLMService) StoreChat(key, resp string, llmReq []*chat.ChatForm
 		Role:    "assistant",
 		Content: resp,
 	})
-	//只保存上一轮对话
-	llmReq = llmReq[:len(llmReq)-2]
+	//最多只保存上一轮对话
+	llmReq = llmReq[lib.Max(len(llmReq)-4, 0):]
 	res, err := json.Marshal(&llmReq)
 	if err != nil {
 		return err
@@ -77,7 +78,7 @@ func (service *WxLLMService) Forbid(content, modeType, key string, msg *openwech
 	return false, nil
 }
 
-func (service *WxLLMService) friendChatProcess(msg *openwechat.Message) (bool, error) {
+func (service *WxLLMService) friendChat(msg *openwechat.Message) (bool, error) {
 	user, err := msg.Sender()
 	if err != nil {
 		return true, err
@@ -124,7 +125,7 @@ func (service *WxLLMService) ModeChangeMark(msg *openwechat.Message) (bool, erro
 	return true, nil
 }
 
-func (service *WxLLMService) groupChatProcess(msg *openwechat.Message) (bool, error) {
+func (service *WxLLMService) groupChat(msg *openwechat.Message) (bool, error) {
 	user, err := msg.SenderInGroup()
 	if err != nil {
 		return true, err
@@ -137,6 +138,12 @@ func (service *WxLLMService) groupChatProcess(msg *openwechat.Message) (bool, er
 			return true, err
 		}
 		value = constant.NorMalModeChat
+	}
+	if msg.Content == "" {
+		service.replyTextChan <- &reply.Reply{
+			Message: msg,
+			Content: constant.EmptyReply,
+		}
 	}
 	err = service.GroupChatModel[value](msg, user)
 	if err != nil {

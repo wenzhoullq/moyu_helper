@@ -1,4 +1,4 @@
-package service
+package wx
 
 import (
 	"errors"
@@ -11,8 +11,8 @@ import (
 	"weixin_LLM/init/log"
 	"weixin_LLM/lib"
 	"weixin_LLM/lib/constant"
-	"weixin_LLM/service/wx_cron"
-	"weixin_LLM/service/wx_llm"
+	"weixin_LLM/service/wx/wx_cron"
+	"weixin_LLM/service/wx/wx_llm"
 )
 
 type WxService struct {

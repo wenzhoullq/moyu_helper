@@ -91,3 +91,10 @@ func ProcessingCommands(str string) string {
 	}
 	return str
 }
+
+func Max(a, b int) int {
+	if a < b {
+		return b
+	}
+	return a
+}

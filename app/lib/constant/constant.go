@@ -20,25 +20,25 @@ const (
 )
 
 const (
-	PreContent                      = "用50个字以内回答:\n"
+	PreContent                      = "请结合上下文并用50个字以内回答:\n"
 	Short                           = "把如下内容缩短至50个字以内:\n"
 	SignFailReply                   = "╭┈┈⚠️失败⚠️┈┈╮\n❗ 请设置群昵称后签到\n╰┈┈⚠️失败⚠️┈┈╯"
 	SignSuccessReply                = "╭┈┈┈🏡签到🏡┈┈┈╮\n🌼昵称：%s\n🐾排名：第%d名\n💰奖励：%d金币\n📆累积：%d金币\n⏰签到时间: %s\n╰┈┈┈┈┈┈┈┈┈┈┈╯"
 	RepeatSignReply                 = "╭┈┈┈🏡签到🏡┈┈┈╮\n🌼昵称：%s\n🐾状态：今日已签到\n╰┈┈┈🏡签到🏡┈┈┈╯"
 	System                          = "你是汤鸽科技集团有限公司研发的摸鱼小助手,旨在各位摸鱼人进行摸鱼和薅羊毛,@摸鱼小助手并输入薅羊毛获得各种福利"
 	ImgToImgApplicationSuccess      = "好的,请在60秒内请发出图片,我将图片进行风格转换"
-	TransToImgApplicationFail       = "抱歉,您的金币不足15枚,无法进行AI绘画。\n若今天无签到,则可通过签到的方式获得金币。"
+	TransToImgApplicationFail       = "抱歉,您的金币不足%d枚,无法进行AI绘画。\n若今天无签到,则可通过签到的方式获得金币。"
 	ImgReplyGroup                   = "图片正在生成中,请稍等...\n本次预计消耗金币%d枚"
 	ImgReplyFriend                  = "图片正在生成中,请稍等..."
 	ImgGoldConsumeReply             = "图片生成成功!\n剩余金币数量:%d枚"
+	EmptyReply                      = "你好,我是摸鱼小助手,有什么能帮助到您？"
 	ReplyPre                        = "你想要的是否是:\n"
 	NewsSuf                         = "【摸鱼小助手】提醒您:三点几了饮茶先啦🥤。\n这里是今天的摸鱼小新闻,祝各位摸鱼人摸鱼愉快！\n"
-	GoldPriceNews                   = "今日黄金价格:%s元/克"
 	NorMalModeForbidDirty           = "善言结善缘,恶语伤人心。你这一句话我需要花60秒来治愈自己😭😭"
 	AoJiaoModelForbidDirty          = "你说话太没有礼貌了,我不想跟你说话了!"
 	ExDailyMAXFreeImgTransTimeReply = "今日免费生图功能次数已用完,请明日再来使用"
 	HolidayTip                      = "【摸鱼小助手】提醒您:各位摸鱼人上午好🌹！\n工作再累，一定不要忘记摸🐟！有事没事起身去茶水间、去厕所、去廊道走走，别老在工位上坐着，💴是老板的，但命是自己的！\n"
-	WednesdayAd                     = "今日领取美团红包必得9元红包。\n"
+	WednesdayAd                     = "周三神券节,领取美团外卖红包必得9元红包。\n"
 	ModeChatSet                     = "已切换为%s模式"
 	ModeChatSetFail                 = "无该模式"
 )
@@ -72,7 +72,7 @@ const (
 	ChatMode                 = "ChatMode:"
 	ChatModeExp              = 60 * 5
 	ImgExp                   = 60 * 2
-	ImgGoldConsume           = 15
+	ImgGoldConsume           = 25
 	DailyMAXFreeImgTransTime = 3 //每日生图功能额度
 )
 

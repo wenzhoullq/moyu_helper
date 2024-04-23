@@ -10,7 +10,7 @@ import (
 	"weixin_LLM/init/log"
 	"weixin_LLM/init/redis"
 	"weixin_LLM/init/route"
-	"weixin_LLM/service"
+	"weixin_LLM/service/wx"
 )
 
 func main() {
@@ -45,7 +45,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	ws := service.NewWxService()
+	ws := wx.NewWxService()
 	err = ws.InitWxRobot()
 	if err != nil {
 		panic(err)

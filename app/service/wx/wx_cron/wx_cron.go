@@ -16,8 +16,8 @@ import (
 type WxCronService struct {
 	*openwechat.Bot
 	*logrus.Logger
-	groups openwechat.Groups
 	*client.ZhiHuClient
+	groups    openwechat.Groups
 	wxDao     *dao.WxDao
 	sourceDao *dao.SourceDao
 	self      *openwechat.Self
@@ -118,7 +118,7 @@ func (service *WxCronService) SendHolidayTips() {
 		nextRestDays = append(nextRestDays, v)
 	}
 	holidayTipPre := constant.HolidayTip
-	ad := common.AdMap[time.Wednesday]
+	ad := common.AdMap[time.Now().Weekday()]
 	holidayTipSuf := ""
 	for i, v := range nextRestDays {
 		diffDay, err := lib.CalDays(today, v.Date)

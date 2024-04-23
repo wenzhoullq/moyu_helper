@@ -12,6 +12,15 @@ type User struct {
 	GroupName  string    `gorm:"column:group_name" json:"group_name"`                                      // 所在群聊名称
 	UserId     string    `gorm:"column:user_id" json:"user_id"`                                            // 临时ID
 	Reward     int       `gorm:"column:reward;default:0" json:"reward"`                                    // 金币
+	Extra      string    `gorm:"column:extra" json:"extra"`                                                //其他信息
+
+}
+
+type Extra struct {
+	Lv    int `json:"lv"`    //等级
+	Luck  int `json:"luck"`  //幸运值
+	Force int `json:"force"` // 武力值
+
 }
 
 func (user *User) TableName() string {

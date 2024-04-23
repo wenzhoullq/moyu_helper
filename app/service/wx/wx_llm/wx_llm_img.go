@@ -70,7 +70,7 @@ func (service *WxLLMService) checkGold(msg *openwechat.Message, user *openwechat
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			reply := &reply2.Reply{
 				Message: msg,
-				Content: constant.TransToImgApplicationFail,
+				Content: fmt.Sprintf(constant.TransToImgApplicationFail, constant.ImgGoldConsume),
 			}
 			service.replyTextChan <- reply
 			return gorm.ErrRecordNotFound
@@ -80,7 +80,7 @@ func (service *WxLLMService) checkGold(msg *openwechat.Message, user *openwechat
 	if u.Reward < constant.ImgGoldConsume {
 		reply := &reply2.Reply{
 			Message: msg,
-			Content: constant.TransToImgApplicationFail,
+			Content: fmt.Sprintf(constant.TransToImgApplicationFail, constant.ImgGoldConsume),
 		}
 		service.replyTextChan <- reply
 		return gorm.ErrRecordNotFound
@@ -90,6 +90,19 @@ func (service *WxLLMService) checkGold(msg *openwechat.Message, user *openwechat
 
 func (service *WxLLMService) getImgToImgRedisKey(userName string) string {
 	return fmt.Sprintf("%s%s", constant.ImgToImgMark, userName)
+}
+
+func (service *WxLLMService) groupMark(msg *openwechat.Message) (bool, error) {
+	for _, f := range service.groupMarkProducer {
+		ok, err := f(msg)
+		if err != nil {
+			return true, err
+		}
+		if ok {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (service *WxLLMService) groupImgToImgMark(msg *openwechat.Message) (bool, error) {
@@ -211,7 +224,7 @@ func (service *WxLLMService) imgToImg(msg *openwechat.Message, key, value string
 	return nil
 }
 
-func (service *WxLLMService) friendImgToImgProducer(msg *openwechat.Message) (bool, error) {
+func (service *WxLLMService) friendImgToImg(msg *openwechat.Message) (bool, error) {
 	user, err := msg.Sender()
 	if err != nil {
 		return true, err
@@ -237,7 +250,7 @@ func (service *WxLLMService) friendImgToImgProducer(msg *openwechat.Message) (bo
 	return true, err
 }
 
-func (service *WxLLMService) groupImgToImgProducer(msg *openwechat.Message) (bool, error) {
+func (service *WxLLMService) groupImgToImg(msg *openwechat.Message) (bool, error) {
 	user, err := msg.SenderInGroup()
 	if err != nil {
 		return true, err
