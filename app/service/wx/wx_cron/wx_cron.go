@@ -159,7 +159,7 @@ func (service *WxCronService) SendNews() {
 		if i >= constant.MaxNewsNum {
 			break
 		}
-		newsSuf += fmt.Sprintf("%d.%s   %s🔥。\n %s \n", i+1, v.Target.Title, v.DetailText, v.Target.URL)
+		newsSuf += fmt.Sprintf("%d.%s\n %s \n", i+1, v.Target.Title, v.Target.URL)
 	}
 	news := newsPre + newsSuf
 	for _, group := range service.groups {

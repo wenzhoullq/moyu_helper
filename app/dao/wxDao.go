@@ -52,23 +52,22 @@ func (wd *WxDao) GetUserByUserNameAndGroupNameAndUserId(displayName string, grou
 	return user, nil
 }
 
-func (wd *WxDao) GetUserByUserID(userId string) (*user.User, error) {
-	user := &user.User{}
-	if err := wd.Table(user.TableName()).Where("user_id = ?", userId).Find(user).Error; err != nil {
-		return nil, err
-	}
-	return user, nil
-}
-
-func (wd *WxDao) UpdateUserByUserNameAndGroupNameAndUserId(user *user.User) error {
+func (wd *WxDao) UpdateUserReward(user *user.User) error {
 	if err := wd.Table(user.TableName()).Where("user_name = ? and group_name = ? and user_id = ?", user.UserName, user.GroupName, user.UserId).Update("reward", user.Reward).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
-func (wd *WxDao) UpdateRewardByUserID(user *user.User) error {
-	if err := wd.Table(user.TableName()).Where("user_id = ? ", user.UserId).Update("reward", user.Reward).Error; err != nil {
+func (wd *WxDao) UpdateUserExtra(user *user.User) error {
+	if err := wd.Table(user.TableName()).Where("user_name = ? and group_name = ? and user_id = ?", user.UserName, user.GroupName, user.UserId).Update("extra", user.Extra).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (wd *WxDao) UpdateUserName(user *user.User) error {
+	if err := wd.Table(user.TableName()).Where("user_name = ? and group_name = ? and user_id = ?", user.UserName, user.GroupName, user.UserId).Update("user_name", user.UserName).Error; err != nil {
 		return err
 	}
 	return nil
@@ -76,20 +75,6 @@ func (wd *WxDao) UpdateRewardByUserID(user *user.User) error {
 
 func (wd *WxDao) AddUser(user *user.User) error {
 	if err := wd.Table(user.TableName()).Create(user).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
-func (wd *WxDao) UpdateUser(user *user.User) error {
-	if err := wd.Table(user.TableName()).Where("group_name = ? and user_name = ?", user.GroupName, user.UserName).Update("reward", user.Reward).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
-func (wd *WxDao) UpdateUserName(user *user.User) error {
-	if err := wd.Table(user.TableName()).Where("user_id = ?", user.UserId).Update("user_name", user.UserName).Error; err != nil {
 		return err
 	}
 	return nil

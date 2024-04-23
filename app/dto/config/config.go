@@ -19,16 +19,16 @@ type TxConfigure struct {
 }
 
 type FileConfigure struct {
-	HolidayFile string `toml:"holiday_file"`
-	ImgFile     string `toml:"img_file"`
+	HolidayFile   string `toml:"holiday_file"`
+	ImgFile       string `toml:"img_file"`
+	ElePosterFile string `toml:"ele_poster_file"`
 }
 
 type SignConfigure struct {
-	SignRewardFirst  int    `toml:"sign_reward_first"`
-	SignRewardSecond int    `toml:"sign_reward_second"`
-	SignRewardThird  int    `toml:"sign_reward_third"`
-	SignRewardElse   int    `toml:"sign_reward_else"`
-	SignMark         string `toml:"sign_mark"`
+	SignRewardFirst  int `toml:"sign_reward_first"`
+	SignRewardSecond int `toml:"sign_reward_second"`
+	SignRewardThird  int `toml:"sign_reward_third"`
+	SignRewardElse   int `toml:"sign_reward_else"`
 }
 
 type RedisConfigure struct {

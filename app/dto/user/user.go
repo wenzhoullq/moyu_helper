@@ -17,10 +17,10 @@ type User struct {
 }
 
 type Extra struct {
-	Lv    int `json:"lv"`    //等级
-	Luck  int `json:"luck"`  //幸运值
-	Force int `json:"force"` // 武力值
-
+	Lv       int `json:"lv"`        // 等级
+	Luck     int `json:"luck"`      // 幸运值
+	Force    int `json:"force"`     // 武力值
+	SignTime int `json:"sign_time"` // 签到次数
 }
 
 func (user *User) TableName() string {

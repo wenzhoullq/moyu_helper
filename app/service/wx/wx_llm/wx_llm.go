@@ -1,7 +1,10 @@
 package wx_llm
 
 import (
+	"errors"
+	"fmt"
 	"github.com/eatmoreapple/openwechat"
+	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 	"os"
 	"sync"
@@ -22,6 +25,7 @@ type WxLLMService struct {
 	groupTextToImgChan  chan *openwechat.Message
 	friendImgToImgChan  chan *openwechat.Message
 	groupImgToImgChan   chan *openwechat.Message
+	upgradeChan         chan *openwechat.Message
 	replyTextChan       chan *reply.Reply
 	replyImgChan        chan *reply.ImgReply
 	updateChan          chan struct{}
@@ -47,7 +51,8 @@ func NewWxLLMService(ops ...func(c *WxLLMService)) *WxLLMService {
 		Ernie8KClient:       client.NewErnie8KClient(client.SetToken(common.Token)),
 		TxCloudClient:       client.NewTxCloudClient(),
 		AoJiaoClient:        client.NewAoJiaoClient(),
-		signChan:            make(chan *openwechat.Message, constant.SignMaxNum),
+		signChan:            make(chan *openwechat.Message, constant.GameMaxNum),
+		upgradeChan:         make(chan *openwechat.Message, constant.GameMaxNum),
 		friendTextToImgChan: make(chan *openwechat.Message, constant.ReplyPicMaxNum),
 		groupTextToImgChan:  make(chan *openwechat.Message, constant.ReplyPicMaxNum),
 		groupImgToImgChan:   make(chan *openwechat.Message, constant.ReplyPicMaxNum),
@@ -61,7 +66,7 @@ func NewWxLLMService(ops ...func(c *WxLLMService)) *WxLLMService {
 	service.friendImgProducer = []func(*openwechat.Message) (bool, error){service.friendImgToImg}
 	service.groupTextProducer = []func(*openwechat.Message) (bool, error){service.game, service.tools, service.groupMark, service.groupTextToImg, service.groupChat}
 	service.groupImgProducer = []func(*openwechat.Message) (bool, error){service.groupImgToImg}
-	service.groupGameProducer = []func(message *openwechat.Message) (bool, error){service.sign}
+	service.groupGameProducer = []func(message *openwechat.Message) (bool, error){service.sign, service.upgrade}
 	service.groupMarkProducer = []func(message *openwechat.Message) (bool, error){service.groupImgToImgMark, service.ModeChangeMark}
 	service.GroupChatModel = map[string]func(*openwechat.Message, *openwechat.User) error{
 		constant.NorMalModeChat: service.NormalChatProcess,
@@ -131,26 +136,39 @@ func (service *WxLLMService) Process() {
 				err := service.signProcess(msg)
 				if err != nil {
 					service.Logln(logrus.ErrorLevel, err.Error())
+					continue
+				}
+			case msg := <-service.upgradeChan:
+				err := service.upgradeProcess(msg)
+				if err != nil {
+					service.Logln(logrus.ErrorLevel, err.Error())
+					continue
 				}
 			case msg := <-service.friendTextToImgChan:
 				err := service.friendTextToImgProcess(msg)
 				if err != nil {
 					service.Logln(logrus.ErrorLevel, err.Error())
+					continue
 				}
+
 			case msg := <-service.groupTextToImgChan:
 				err := service.groupTextToImgProcess(msg)
 				if err != nil {
 					service.Logln(logrus.ErrorLevel, err.Error())
+					continue
 				}
+
 			case msg := <-service.friendImgToImgChan:
 				err := service.friendImgToImgProcess(msg)
 				if err != nil {
 					service.Logln(logrus.ErrorLevel, err.Error())
+					continue
 				}
 			case msg := <-service.groupImgToImgChan:
 				err := service.groupImgToImgProcess(msg)
 				if err != nil {
 					service.Logln(logrus.ErrorLevel, err.Error())
+					continue
 				}
 			}
 		}
@@ -167,6 +185,7 @@ func (service *WxLLMService) Reply() {
 					service.Logln(logrus.ErrorLevel, err.Error())
 					continue
 				}
+				//打日志
 				user, err := textReply.Message.Sender()
 				if err != nil {
 					service.Logln(logrus.ErrorLevel, err.Error())
@@ -182,6 +201,7 @@ func (service *WxLLMService) Reply() {
 			case imgReply := <-service.replyImgChan:
 				file, err := os.Open(imgReply.Path)
 				if err != nil {
+					service.Logln(logrus.ErrorLevel, err.Error())
 					return
 				}
 				_, err = imgReply.ReplyImage(file)
@@ -192,4 +212,55 @@ func (service *WxLLMService) Reply() {
 			}
 		}
 	}()
+}
+
+func (service *WxLLMService) checkGold(msg *openwechat.Message, goldConsume int) (bool, error) {
+	user, err := msg.SenderInGroup()
+	if err != nil {
+		return true, err
+	}
+	group, err := msg.Sender()
+	if err != nil {
+		return true, err
+	}
+	u, err := service.wxDao.GetUserByUserNameAndGroupNameAndUserId(user.DisplayName, group.NickName, user.UserName)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	if u.Reward < goldConsume {
+		return false, nil
+	}
+	return true, nil
+}
+func (service *WxLLMService) deductionGold(msg *openwechat.Message, goldConsume int) error {
+	//金币扣除
+	user, err := msg.SenderInGroup()
+	if err != nil {
+		return err
+	}
+	group, err := msg.Sender()
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	u, err := service.wxDao.GetUserByUserNameAndGroupNameAndUserId(user.DisplayName, group.NickName, user.UserName)
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	u.Reward = u.Reward - goldConsume
+	err = service.wxDao.UpdateUserReward(u)
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
+	//发送金币扣除通知
+	service.replyTextChan <- &reply.Reply{
+		Message: msg,
+		Content: fmt.Sprintf(constant.GoldConsumeReply, u.Reward),
+	}
+	return nil
 }

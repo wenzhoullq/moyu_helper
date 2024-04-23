@@ -27,8 +27,9 @@ type Ernie8kResponse struct {
 type ZhiHuTopicResponse struct {
 	Data []struct {
 		Target struct {
+			ID    int    `json:"id"`
 			Title string `json:"title"`
-			URL   string `json:"url"`
+			URL   string
 		} `json:"target"`
 		DetailText string `json:"detail_text"`
 	} `json:"data"`
