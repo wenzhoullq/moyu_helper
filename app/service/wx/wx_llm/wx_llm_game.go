@@ -148,23 +148,12 @@ func (service *WxLLMService) signProcess(msg *openwechat.Message) error {
 	if err != nil {
 		return err
 	}
-	//奖励
-	var reward int
-	switch rank {
-	case 1:
-		reward = config.Config.SignRewardFirst
-		break
-	case 2:
-		reward = config.Config.SignRewardSecond
-		break
-	case 3:
-		reward = config.Config.SignRewardThird
-		break
-	default:
-		reward = config.Config.SignRewardElse
+	//签到奖励
+	reward := config.Config.SignRewardElse
+	if v, ok := service.SignReward[rank]; ok {
+		reward = v
 	}
 	u, err := service.wxDao.GetUserByUserNameAndGroupNameAndUserId(user.DisplayName, group.NickName, user.UserName)
-
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return err

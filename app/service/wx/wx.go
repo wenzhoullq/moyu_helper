@@ -55,7 +55,7 @@ func (ws *WxService) groupSender(msg *openwechat.Message) (bool, error) {
 			return true, nil
 		}
 	}
-	return true, errors.New("no such group request")
+	return true, nil
 }
 
 func (ws *WxService) friendSender(msg *openwechat.Message) (bool, error) {
@@ -74,7 +74,7 @@ func (ws *WxService) friendSender(msg *openwechat.Message) (bool, error) {
 			return true, nil
 		}
 	}
-	return true, errors.New("no such friend request")
+	return true, nil
 }
 
 func (ws *WxService) groupTextMsg(msg *openwechat.Message) (bool, error) {

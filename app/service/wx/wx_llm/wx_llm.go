@@ -11,6 +11,7 @@ import (
 	"weixin_LLM/dao"
 	"weixin_LLM/dto/reply"
 	"weixin_LLM/init/common"
+	"weixin_LLM/init/config"
 	"weixin_LLM/lib/client"
 	"weixin_LLM/lib/constant"
 )
@@ -39,6 +40,7 @@ type WxLLMService struct {
 	//对话模式
 	GroupChatModel map[string]func(*openwechat.Message, *openwechat.User) error
 	ForbidChat     map[string]string
+	SignReward     map[int64]int
 	wxDao          *dao.WxDao
 	self           *openwechat.Self
 	groups         openwechat.Groups
@@ -76,6 +78,11 @@ func NewWxLLMService(ops ...func(c *WxLLMService)) *WxLLMService {
 	service.ForbidChat = map[string]string{
 		constant.NorMalModeChat: constant.NorMalModeForbidDirty,
 		constant.AoJiaoModeChat: constant.AoJiaoModelForbidDirty,
+	}
+	service.SignReward = map[int64]int{
+		constant.SignFirst:  config.Config.SignRewardFirst,
+		constant.SignSecond: config.Config.SignRewardSecond,
+		constant.SignThird:  config.Config.SignRewardThird,
 	}
 	for _, op := range ops {
 		op(service)

@@ -60,6 +60,12 @@ const (
 )
 
 const (
+	SignFirst  = 1
+	SignSecond = 2
+	SignThird  = 3
+)
+
+const (
 	Unlimited              = "不限定风格"
 	InkWash                = "水墨画"
 	ConceptualArt          = "概念艺术"
@@ -102,19 +108,19 @@ const (
 	Impressionism1Mark         = "109"
 	Impressionism2Mark         = "119"
 	D25Mark                    = "110"
-	D3Mark                     = "116"
 	ClassicalPortraitMark      = "111"
 	BlackAndWhiteSketchingMark = "112"
 	CyberpunkMark              = "113"
 	ScienceFictionMark         = "114"
 	DarkMark                   = "115"
+	D3Mark                     = "116"
 	SteamWaveMark              = "117"
 	JapaneseAnimeMark          = "201"
 	MonsterMark                = "202"
 	BeautifulAncientMark       = "203"
 	RetroAnimeMark             = "204"
 	GameCartoonMark            = "301"
-	UniversalMark              = "304"
+	UniversalMark              = "401"
 )
 
 const (
