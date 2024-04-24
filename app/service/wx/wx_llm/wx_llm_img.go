@@ -274,7 +274,8 @@ func (service *WxLLMService) imgProcess(msg *openwechat.Message) error {
 }
 
 func (service *WxLLMService) textToImgProcess(msg *openwechat.Message) error {
-	resp, err := service.TxCloudClient.PostTextToImg(msg.Content)
+
+	resp, err := service.TxCloudClient.PostTextToImg(msg.Content, "")
 	if err != nil {
 		return err
 	}

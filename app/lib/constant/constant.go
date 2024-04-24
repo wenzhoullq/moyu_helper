@@ -12,23 +12,23 @@ const (
 )
 
 const (
-	LlmKeyWord        = "@摸鱼小助手"
-	SignKeyWord       = "签到"
-	ImgToImgKeyWord   = "风格转换"
-	TextToImgKeyWord  = "画"
-	ModeChangeKeyWord = "切换"
-	EleKeyWord        = "饿了么"
-	Upgrade           = "升级"
+	LlmKeyWord       = "@摸鱼小助手"
+	SignKeyWord      = "签到"
+	ImgToImgKeyWord  = "风格转换"
+	TextToImgKeyWord = "画"
+	EleKeyWord       = "饿了么"
+	Upgrade          = "升级"
 )
 
 const (
-	PreContent                      = "请结合上下文并用50个字以内回答:\n"
-	Short                           = "把如下内容缩短至50个字以内:\n"
-	SignFailReply                   = "╭┈┈⚠️失败⚠️┈┈╮\n❗ 请设置群昵称后签到\n╰┈┈⚠️失败⚠️┈┈╯"
-	SignSuccessReply                = "╭┈┈┈🏡签到🏡┈┈┈╮\n🌼昵称：%s\n🐾排名：第%d名\n📆奖励：%d枚金币\n💰财富：%d枚金币\n📝签到次数：%d次\n⏰签到时间: %s\n╰┈┈┈┈┈┈┈┈┈┈┈╯"
-	StatusSuccessReply              = "╭┈┈┈🥷人物🥷┈┈┈╮\n🌼昵称：%s\n💯等级：LV%d\n👊武力值:%d\n😺幸运值:%d\n💰财富：%d枚金币\n╰┈┈┈┈┈┈┈┈┈┈┈╯"
-	RepeatSignReply                 = "╭┈┈┈🏡签到🏡┈┈┈╮\n🌼昵称：%s\n🐾状态：今日已签到\n╰┈┈┈🏡签到🏡┈┈┈╯"
-	System                          = "你是汤鸽科技集团有限公司研发的摸鱼小助手,旨在各位摸鱼人进行摸鱼和薅羊毛,@摸鱼小助手并输入薅羊毛获得各种福利"
+	PreContent         = "请结合上下文并用50个字以内回答:\n"
+	Short              = "把如下内容缩短至50个字以内:\n"
+	SignFailReply      = "╭┈┈⚠️失败⚠️┈┈╮\n❗ 请设置群昵称后签到\n╰┈┈⚠️失败⚠️┈┈╯"
+	SignSuccessReply   = "╭┈┈┈🏡签到🏡┈┈┈╮\n🌼昵称：%s\n🐾排名：第%d名\n📆奖励：%d枚金币\n💰财富：%d枚金币\n📝签到次数：%d次\n⏰签到时间: %s\n╰┈┈┈┈┈┈┈┈┈┈┈╯"
+	StatusSuccessReply = "╭┈┈┈🥷人物🥷┈┈┈╮\n🌼昵称：%s\n💯等级：LV%d\n👊武力值:%d\n😺幸运值:%d\n💰财富：%d枚金币\n╰┈┈┈┈┈┈┈┈┈┈┈╯"
+	RepeatSignReply    = "╭┈┈┈🏡签到🏡┈┈┈╮\n🌼昵称：%s\n🐾状态：今日已签到\n╰┈┈┈🏡签到🏡┈┈┈╯"
+	SystemNormal       = "你是汤鸽科技集团有限公司研发的摸鱼小助手,旨在各位摸鱼人进行摸鱼和薅羊毛,@摸鱼小助手并输入薅羊毛获得各种福利"
+	//SystemDoctor                    = "你是汤鸽科技集团有限公司研发的摸鱼小助手医疗藐视,旨在各位摸鱼人进行各种医疗相关问题咨询,但是实际情况还得线下医生问诊"
 	ImgToImgApplicationSuccess      = "好的,请在60秒内请发出图片,我将图片进行风格转换"
 	TransToImgApplicationFail       = "抱歉,您的金币不足%d枚,无法进行AI绘画。%s"
 	UpgradeApplicationFail          = "抱歉,您的金币不足%d枚,无法进行升级。%s"
@@ -53,8 +53,9 @@ const (
 )
 
 const (
-	NorMalModeChat = "正常"
-	AoJiaoModeChat = "傲娇"
+	NorMalModeChat = "正常模式"
+	AoJiaoModeChat = "傲娇模式"
+	DoctorModeChat = "医疗模式"
 )
 
 const (
@@ -76,7 +77,7 @@ const (
 	ImgToImgMark             = "imgToImg:"
 	FriendImgToImgMark       = "friendImgToImg:"
 	ChatMode                 = "ChatMode:"
-	ChatModeExp              = 60 * 5
+	ChatModeExp              = -1
 	ImgExp                   = 60 * 2
 	ImgGoldConsume           = 25
 	LvUpConsume              = 100

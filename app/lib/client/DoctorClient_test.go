@@ -1,11 +1,12 @@
 package client
 
 import (
+	"fmt"
 	"testing"
 	"weixin_LLM/dto/chat"
 )
 
-func TestBaZongChat(t *testing.T) {
+func TestDoctorChat(t *testing.T) {
 	err := initTest("../../../config/configTest.toml")
 	if err != nil {
 		t.Error(err)
@@ -17,15 +18,16 @@ func TestBaZongChat(t *testing.T) {
 		t.Error(err)
 		panic(err)
 	}
-	EClient := NewBaDaoClient(SetBaDaoToken(token))
-	msgContent := append(make([]*chat.ChatForm, 0), &chat.ChatForm{
+	DoctorClient := NewDoctorClient(SetDoctorClientToken(token))
+	msgConetent := append(make([]*chat.ChatForm, 0), &chat.ChatForm{
 		Role:    "user",
-		Content: "描述下霸道总裁吗",
+		Content: "你是傻逼",
 	})
-	res, err := EClient.ChatToBaZong(msgContent)
+	res, err := DoctorClient.Chat(msgConetent)
 	if err != nil {
 		t.Error(err)
 		panic(err)
 	}
 	t.Log(res)
+	fmt.Sprintf("%#v", res)
 }

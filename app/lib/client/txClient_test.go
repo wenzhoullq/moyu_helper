@@ -39,7 +39,7 @@ func TestTxCloudTextToImg(t *testing.T) {
 		panic(err)
 	}
 	client := NewTxCloudClient()
-	resp, err := client.PostTextToImg("生成一个二次元妹妹")
+	resp, err := client.PostTextToImg("画一个美女", "101")
 	if err != nil {
 		t.Error(err)
 		panic(err)

@@ -103,33 +103,24 @@ func (service *WxLLMService) getChatModeKey(user *openwechat.User) string {
 }
 
 func (service *WxLLMService) ModeChangeMark(msg *openwechat.Message) (bool, error) {
-	if !strings.HasPrefix(msg.Content, constant.ModeChangeKeyWord) {
-		return false, nil
-	}
 	user, err := msg.SenderInGroup()
 	if err != nil {
 		return true, err
 	}
-	key := service.getChatModeKey(user)
-	for k, _ := range common.ModeMap {
-		if !strings.Contains(msg.Content, k) {
-			continue
-		}
+	//对话模型
+	if _, ok := common.ModeMap[msg.Content]; ok {
+		key := service.getChatModeKey(user)
 		//将标记插入redis
-		service.wxDao.SetString(key, k, constant.ChatModeExp)
+		service.wxDao.SetString(key, msg.Content, constant.ChatModeExp)
 		//发送切换成功
 		service.replyTextChan <- &reply.Reply{
 			Message: msg,
-			Content: fmt.Sprintf(constant.ModeChatSet, k),
+			Content: fmt.Sprintf(constant.ModeChatSet, msg.Content),
 		}
 		return true, nil
 	}
-	//回复无该模式
-	service.replyTextChan <- &reply.Reply{
-		Message: msg,
-		Content: constant.ModeChatSetFail,
-	}
-	return true, nil
+
+	return false, nil
 }
 
 func (service *WxLLMService) groupChat(msg *openwechat.Message) (bool, error) {
@@ -173,6 +164,38 @@ func (service *WxLLMService) ChatProcess(msg *openwechat.Message, user *openwech
 	if value != "" {
 		return nil
 	}
+	return nil
+}
+
+func (service *WxLLMService) DoctorChatProcess(msg *openwechat.Message, user *openwechat.User) error {
+	//forbidKey := constant.Forbid + user.UserName
+	//value, err := service.wxDao.GetString(forbidKey)
+	//if err != nil {
+	//	if err != redis.Nil {
+	//		return err
+	//	}
+	//}
+	//// 该用户还在被封禁
+	//if value != "" {
+	//	return nil
+	//}
+	resp, err := service.AoJiaoClient.Chat(msg.Content)
+	if err != nil {
+		return err
+	}
+	//封禁
+	//forbid, err := service.Forbid(resp, constant.AoJiaoModeChat, forbidKey, msg)
+	//if err != nil {
+	//	return err
+	//}
+	//if forbid {
+	//	return nil
+	//}
+	service.replyTextChan <- &reply.Reply{
+		Content: resp,
+		Message: msg,
+	}
+	service.Logln(logrus.InfoLevel, user.NickName, "llmProcess success")
 	return nil
 }
 

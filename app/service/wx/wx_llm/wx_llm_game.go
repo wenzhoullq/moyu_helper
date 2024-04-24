@@ -63,7 +63,10 @@ func (service *WxLLMService) upgradeProcess(msg *openwechat.Message) error {
 	}
 	extra := &uu.Extra{}
 	err = json.Unmarshal([]byte(u.Extra), extra)
+	//等级 武力 幸运值均升级
 	extra.Lv = extra.Lv + 1
+	extra.Force = extra.Force + 1
+	extra.Luck = extra.Luck + 1
 	extraJson, err := json.Marshal(extra)
 	if err != nil {
 		return err

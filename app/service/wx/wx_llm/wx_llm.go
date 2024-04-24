@@ -71,6 +71,7 @@ func NewWxLLMService(ops ...func(c *WxLLMService)) *WxLLMService {
 	service.GroupChatModel = map[string]func(*openwechat.Message, *openwechat.User) error{
 		constant.NorMalModeChat: service.NormalChatProcess,
 		constant.AoJiaoModeChat: service.AoJiaoChatProcess,
+		constant.DoctorModeChat: service.DoctorChatProcess,
 	}
 	service.ForbidChat = map[string]string{
 		constant.NorMalModeChat: constant.NorMalModeForbidDirty,

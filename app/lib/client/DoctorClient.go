@@ -10,13 +10,13 @@ import (
 	"weixin_LLM/lib/constant"
 )
 
-type BaDaoClient struct {
+type DoctorClient struct {
 	client *resty.Client
 	token  string
 }
 
-func NewBaDaoClient(ops ...func(c *BaDaoClient)) *BaDaoClient {
-	client := &BaDaoClient{
+func NewDoctorClient(ops ...func(c *DoctorClient)) *DoctorClient {
+	client := &DoctorClient{
 		client: resty.New(),
 	}
 	for _, op := range ops {
@@ -25,14 +25,13 @@ func NewBaDaoClient(ops ...func(c *BaDaoClient)) *BaDaoClient {
 	return client
 }
 
-func SetBaDaoToken(token string) func(client *BaDaoClient) {
-	return func(client *BaDaoClient) {
+func SetDoctorClientToken(token string) func(client *DoctorClient) {
+	return func(client *DoctorClient) {
 		client.token = token
 	}
 }
-
-func (client *BaDaoClient) ChatToBaZong(content []*chat.ChatForm) (*response.Ernie8kResponse, error) {
-	url := "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions"
+func (client *DoctorClient) Chat(content []*chat.ChatForm) (*response.Ernie8kResponse, error) {
+	url := "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/"
 	headerMap := map[string]string{
 		"Content-Type": "application/json",
 	}

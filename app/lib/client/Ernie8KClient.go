@@ -41,7 +41,7 @@ func (client *Ernie8KClient) Chat(content []*chat.ChatForm) (*response.Ernie8kRe
 	}
 	bodyMap := map[string]interface{}{
 		"messages": content,
-		"system":   constant.System,
+		"system":   constant.SystemNormal,
 	}
 	resp, err := client.client.R().
 		SetBody(bodyMap).

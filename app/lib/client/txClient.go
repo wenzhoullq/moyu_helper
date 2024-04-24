@@ -47,11 +47,13 @@ func (tc *TxCloudClient) PostImgToImg(base64 string, value string) (*r1.TxImgToI
 	return txImgToImgResp, nil
 }
 
-func (tc *TxCloudClient) PostTextToImg(text string) (*r1.TxImgToImgResp, error) {
+func (tc *TxCloudClient) PostTextToImg(text, style string) (*r1.TxImgToImgResp, error) {
 	request := aiart.NewTextToImageRequest()
 	request.Prompt = &text
 	var logoAdd int64 = 0
 	request.LogoAdd = &logoAdd
+	styles := []*string{&style}
+	request.Styles = styles
 	response, err := tc.Client.TextToImage(request)
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {
 		return nil, err

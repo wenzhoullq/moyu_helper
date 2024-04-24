@@ -105,7 +105,7 @@ func (ws *WxService) groupTextMsg(msg *openwechat.Message) (bool, error) {
 
 func (ws *WxService) groupImgMsg(msg *openwechat.Message) (bool, error) {
 	if !msg.IsPicture() {
-		return false, errors.New("not pic")
+		return false, nil
 	}
 	for _, f := range ws.WxLLMService.GetGroupImgProducer() {
 		ok, err := f(msg)
@@ -143,7 +143,7 @@ func (ws *WxService) friendTextMsg(msg *openwechat.Message) (bool, error) {
 
 func (ws *WxService) friendImgMsg(msg *openwechat.Message) (bool, error) {
 	if !msg.IsPicture() {
-		return false, errors.New("not pic")
+		return false, nil
 	}
 	for _, f := range ws.WxLLMService.GetFriendImgProducer() {
 		ok, err := f(msg)
