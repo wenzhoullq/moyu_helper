@@ -24,9 +24,12 @@ func (service *WxLLMService) friendTextToImg(msg *openwechat.Message) (bool, err
 	if err != nil {
 		return true, err
 	}
-	err = service.DailyFreeTimeCheck(user, msg)
+	ok, err := service.DailyFreeTimeCheck(user, msg)
 	if err != nil {
 		return true, err
+	}
+	if !ok {
+		return true, nil
 	}
 	//回复正在生成中
 	service.replyTextChan <- &reply2.Reply{
@@ -131,18 +134,18 @@ func (service *WxLLMService) redisKeyFriendImgToImgMark(user *openwechat.User) s
 	return fmt.Sprintf("%s%s", constant.FriendImgToImgMark, user.UserName)
 }
 
-func (service *WxLLMService) DailyFreeTimeCheck(user *openwechat.User, msg *openwechat.Message) error {
+func (service *WxLLMService) DailyFreeTimeCheck(user *openwechat.User, msg *openwechat.Message) (bool, error) {
 	//查看免费额度使
 	key := service.redisKeyFriendImgToImgMark(user)
 	times, err := service.wxDao.IncrKey(key)
 	if err != nil && err != redis.Nil {
 		service.Logln(logrus.ErrorLevel, err.Error())
-		return err
+		return false, err
 	}
 	_, err = service.wxDao.Expire(key, lib.SecondsUntilMidnight())
 	if err != nil && err != redis.Nil {
 		service.Logln(logrus.ErrorLevel, err.Error())
-		return err
+		return false, err
 	}
 	//如果大于最大次数,则退出
 	if times > constant.DailyMAXFreeImgTransTime {
@@ -150,9 +153,9 @@ func (service *WxLLMService) DailyFreeTimeCheck(user *openwechat.User, msg *open
 			Message: msg,
 			Content: constant.ExDailyMAXFreeImgTransTimeReply,
 		}
-		return errors.New("transToImg times more than daily")
+		return false, errors.New("transToImg times more than daily")
 	}
-	return nil
+	return true, nil
 }
 
 func (service *WxLLMService) friendImgToImgMark(msg *openwechat.Message) (bool, error) {
@@ -164,9 +167,12 @@ func (service *WxLLMService) friendImgToImgMark(msg *openwechat.Message) (bool, 
 		return true, err
 	}
 	// 查看免费额度
-	err = service.DailyFreeTimeCheck(user, msg)
+	ok, err := service.DailyFreeTimeCheck(user, msg)
 	if err != nil {
 		return true, err
+	}
+	if !ok {
+		return true, nil
 	}
 	//打标记
 	err = service.imgToImgMark(user, msg)
@@ -273,9 +279,8 @@ func (service *WxLLMService) imgProcess(msg *openwechat.Message) error {
 	return nil
 }
 
-func (service *WxLLMService) textToImgProcess(msg *openwechat.Message) error {
-
-	resp, err := service.TxCloudClient.PostTextToImg(msg.Content, "")
+func (service *WxLLMService) textToImgProcess(msg *openwechat.Message, style string) error {
+	resp, err := service.TxCloudClient.PostTextToImg(msg.Content, style)
 	if err != nil {
 		return err
 	}
@@ -288,7 +293,16 @@ func (service *WxLLMService) textToImgProcess(msg *openwechat.Message) error {
 }
 
 func (service *WxLLMService) groupTextToImgProcess(msg *openwechat.Message) error {
-	err := service.textToImgProcess(msg)
+	user, err := msg.SenderInGroup()
+	key := service.getImgModeKey(user)
+	value, err := service.wxDao.GetString(key)
+	if err != nil {
+		if err != redis.Nil {
+			return err
+		}
+		value = constant.UnlimitedMark
+	}
+	err = service.textToImgProcess(msg, value)
 	if err != nil {
 		return err
 	}
@@ -305,7 +319,16 @@ func (service *WxLLMService) groupTextToImgProcess(msg *openwechat.Message) erro
 }
 
 func (service *WxLLMService) friendTextToImgProcess(msg *openwechat.Message) error {
-	err := service.textToImgProcess(msg)
+	user, err := msg.Sender()
+	key := service.getImgModeKey(user)
+	value, err := service.wxDao.GetString(key)
+	if err != nil {
+		if err != redis.Nil {
+			return err
+		}
+		value = constant.UnlimitedMark
+	}
+	err = service.textToImgProcess(msg, value)
 	if err != nil {
 		return err
 	}

@@ -44,7 +44,8 @@ const (
 	ExDailyMAXFreeImgTransTimeReply = "今日免费生图功能次数已用完,请明日再来使用"
 	HolidayTip                      = "【摸鱼小助手】提醒您:各位摸鱼人上午好🌹！\n工作再累，一定不要忘记摸🐟！有事没事起身去茶水间、去厕所、去廊道走走，别老在工位上坐着，💴是老板的，但命是自己的！\n"
 	WednesdayAd                     = "周三神券节,领取美团外卖红包必得9元红包。\n"
-	ModeChatSet                     = "已切换为%s模式"
+	ModeChatSet                     = "已切换为%s对话模式"
+	ModeImgSet                      = "已切换为%s生图模式"
 	ModeChatSetFail                 = "无该模式"
 )
 const (
@@ -56,6 +57,64 @@ const (
 	NorMalModeChat = "正常模式"
 	AoJiaoModeChat = "傲娇模式"
 	DoctorModeChat = "医疗模式"
+)
+
+const (
+	Unlimited              = "不限定风格"
+	InkWash                = "水墨画"
+	ConceptualArt          = "概念艺术"
+	OilPainting1           = "油画1"
+	OilPainting2           = "油画2(梵高)"
+	Watercolor             = "水彩画"
+	PixelPainting          = "像素画"
+	ThickCoating           = "厚涂风格"
+	Illustration           = "插图"
+	PaperCuttings          = "剪纸"
+	Impressionism1         = "印象派1(莫奈)"
+	Impressionism2         = "印象派2"
+	D25                    = "2.5D"
+	D3                     = "3D"
+	ClassicalPortrait      = "古典肖像画"
+	BlackAndWhiteSketching = "黑白素描画"
+	Cyberpunk              = "赛博朋克"
+	ScienceFiction         = "科幻风格"
+	Dark                   = "暗黑风格"
+	SteamWave              = "蒸汽波"
+	JapaneseAnime          = "日系动漫"
+	Monster                = "怪兽风格"
+	BeautifulAncient       = "唯美古风"
+	RetroAnime             = "复古动漫"
+	GameCartoon            = "游戏卡通手绘"
+	Universal              = "通用写实风格"
+)
+
+const (
+	UnlimitedMark              = "000"
+	InkWashMark                = "101"
+	ConceptualArtMark          = "102"
+	OilPainting1Mark           = "103"
+	OilPainting2Mark           = "118"
+	WatercolorMark             = "104"
+	PixelPaintingMark          = "105"
+	ThickCoatingMark           = "106"
+	IllustrationMark           = "107"
+	PaperCuttingsMark          = "108"
+	Impressionism1Mark         = "109"
+	Impressionism2Mark         = "119"
+	D25Mark                    = "110"
+	D3Mark                     = "116"
+	ClassicalPortraitMark      = "111"
+	BlackAndWhiteSketchingMark = "112"
+	CyberpunkMark              = "113"
+	ScienceFictionMark         = "114"
+	DarkMark                   = "115"
+	SteamWaveMark              = "117"
+	JapaneseAnimeMark          = "201"
+	MonsterMark                = "202"
+	BeautifulAncientMark       = "203"
+	RetroAnimeMark             = "204"
+	GameCartoonMark            = "301"
+	UniversalMark              = "304"
 )
 
 const (
@@ -77,7 +136,8 @@ const (
 	ImgToImgMark             = "imgToImg:"
 	FriendImgToImgMark       = "friendImgToImg:"
 	ChatMode                 = "ChatMode:"
-	ChatModeExp              = -1
+	ImgMode                  = "ImgMode:"
+	ModeExp                  = -1
 	ImgExp                   = 60 * 2
 	ImgGoldConsume           = 25
 	LvUpConsume              = 100

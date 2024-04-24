@@ -19,7 +19,8 @@ var ToolMap map[string]string
 var ToolReplySuf map[string]string
 var KeyMap map[string]string
 var AdMap map[time.Weekday]string
-var ModeMap map[string]struct{}
+var ChatModeMap map[string]struct{}
+var ImgModeMap map[string]string
 
 func InitCommon() error {
 	client := client.NewQianFanClient()
@@ -52,9 +53,37 @@ func InitCommon() error {
 }
 
 func InitModeMap() error {
-	ModeMap = map[string]struct{}{
+	ChatModeMap = map[string]struct{}{
 		constant.NorMalModeChat: {},
 		constant.AoJiaoModeChat: {},
+	}
+	ImgModeMap = map[string]string{
+		constant.Unlimited:              constant.UnlimitedMark,
+		constant.InkWash:                constant.InkWashMark,
+		constant.ConceptualArt:          constant.ConceptualArtMark,
+		constant.OilPainting1:           constant.OilPainting1Mark,
+		constant.OilPainting2:           constant.OilPainting2Mark,
+		constant.Watercolor:             constant.WatercolorMark,
+		constant.PixelPainting:          constant.PixelPaintingMark,
+		constant.ThickCoating:           constant.ThickCoatingMark,
+		constant.Illustration:           constant.IllustrationMark,
+		constant.PaperCuttings:          constant.PaperCuttingsMark,
+		constant.Impressionism1:         constant.Impressionism1Mark,
+		constant.Impressionism2:         constant.Impressionism2Mark,
+		constant.D25:                    constant.D25Mark,
+		constant.D3:                     constant.D3Mark,
+		constant.ClassicalPortrait:      constant.ClassicalPortraitMark,
+		constant.BlackAndWhiteSketching: constant.BlackAndWhiteSketchingMark,
+		constant.Cyberpunk:              constant.CyberpunkMark,
+		constant.ScienceFiction:         constant.ScienceFictionMark,
+		constant.Dark:                   constant.DarkMark,
+		constant.SteamWave:              constant.SteamWaveMark,
+		constant.JapaneseAnime:          constant.JapaneseAnimeMark,
+		constant.Monster:                constant.MonsterMark,
+		constant.BeautifulAncient:       constant.BeautifulAncientMark,
+		constant.RetroAnime:             constant.RetroAnimeMark,
+		constant.GameCartoon:            constant.GameCartoonMark,
+		constant.Universal:              constant.UniversalMark,
 	}
 	return nil
 }
