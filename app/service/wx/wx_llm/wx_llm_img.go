@@ -138,7 +138,7 @@ func (service *WxLLMService) DailyFreeTimeCheck(user *openwechat.User, msg *open
 	//查看免费额度使
 	key := service.redisKeyFriendImgToImgMark(user)
 	times, err := service.wxDao.IncrKey(key)
-	if err != nil && err != redis.Nil {
+	if err != nil {
 		service.Logln(logrus.ErrorLevel, err.Error())
 		return false, err
 	}

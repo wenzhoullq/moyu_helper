@@ -124,7 +124,7 @@ func (ws *WxService) friendTextMsg(msg *openwechat.Message) (bool, error) {
 		return false, errors.New("msg send by self")
 	}
 	if !msg.IsText() {
-		return false, errors.New("not text")
+		return false, nil
 	}
 	msg.Content = strings.TrimSpace(msg.Content)
 	//把小写全部转为大写
@@ -138,7 +138,7 @@ func (ws *WxService) friendTextMsg(msg *openwechat.Message) (bool, error) {
 			return true, nil
 		}
 	}
-	return true, errors.New("no such group img request")
+	return true, nil
 }
 
 func (ws *WxService) friendImgMsg(msg *openwechat.Message) (bool, error) {

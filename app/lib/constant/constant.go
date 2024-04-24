@@ -35,7 +35,7 @@ const (
 	GoldGetTip                      = "\n可通过签到的方式获得金币。"
 	ImgReplyGroup                   = "图片正在生成中,请稍等...\n本次预计消耗金币%d枚"
 	ImgReplyFriend                  = "图片正在生成中,请稍等..."
-	GoldConsumeReply                = "金币扣除成功!\n剩余金币数量:%d枚"
+	GoldConsumeReply                = "金币扣除%d枚!\n剩余金币数量:%d枚"
 	EmptyReply                      = "你好,我是摸鱼小助手,有什么能帮助到您？"
 	ReplyPre                        = "你想要的是否是:\n"
 	NewsSuf                         = "【摸鱼小助手】这里是今天的摸鱼小新闻,祝各位摸鱼人摸鱼愉快！\n"

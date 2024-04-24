@@ -268,7 +268,7 @@ func (service *WxLLMService) deductionGold(msg *openwechat.Message, goldConsume 
 	//发送金币扣除通知
 	service.replyTextChan <- &reply.Reply{
 		Message: msg,
-		Content: fmt.Sprintf(constant.GoldConsumeReply, u.Reward),
+		Content: fmt.Sprintf(constant.GoldConsumeReply, goldConsume, u.Reward),
 	}
 	return nil
 }
