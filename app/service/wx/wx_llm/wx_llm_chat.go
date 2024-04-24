@@ -80,6 +80,13 @@ func (service *WxLLMService) Forbid(content, modeType, key string, msg *openwech
 
 func (service *WxLLMService) friendChat(msg *openwechat.Message) (bool, error) {
 	user, err := msg.Sender()
+	if msg.Content == "" {
+		service.replyTextChan <- &reply.Reply{
+			Message: msg,
+			Content: constant.EmptyReply,
+		}
+		return true, nil
+	}
 	if err != nil {
 		return true, err
 	}
@@ -127,6 +134,13 @@ func (service *WxLLMService) ModeChangeMark(msg *openwechat.Message) (bool, erro
 
 func (service *WxLLMService) groupChat(msg *openwechat.Message) (bool, error) {
 	user, err := msg.SenderInGroup()
+	if msg.Content == "" {
+		service.replyTextChan <- &reply.Reply{
+			Message: msg,
+			Content: constant.EmptyReply,
+		}
+		return true, nil
+	}
 	if err != nil {
 		return true, err
 	}
@@ -138,12 +152,6 @@ func (service *WxLLMService) groupChat(msg *openwechat.Message) (bool, error) {
 			return true, err
 		}
 		value = constant.NorMalModeChat
-	}
-	if msg.Content == "" {
-		service.replyTextChan <- &reply.Reply{
-			Message: msg,
-			Content: constant.EmptyReply,
-		}
 	}
 	err = service.GroupChatModel[value](msg, user)
 	if err != nil {

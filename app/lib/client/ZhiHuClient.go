@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"strings"
 	"weixin_LLM/dto/response"
 )
 
@@ -35,6 +36,10 @@ func (client *ZhiHuClient) GetHotTopic() (*response.ZhiHuTopicResponse, error) {
 	}
 	for i := range result.Data {
 		result.Data[i].Target.URL = fmt.Sprintf("https://www.zhihu.com/question/%d", result.Data[i].Target.ID)
+		titleSub := strings.Split(result.Data[i].Target.Title, "？")
+		if len(titleSub) > 0 {
+			result.Data[i].Target.Title = titleSub[0] + "?"
+		}
 	}
 	return result, nil
 }
