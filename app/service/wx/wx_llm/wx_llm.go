@@ -7,7 +7,6 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 	"os"
-	"sync"
 	"weixin_LLM/dao"
 	"weixin_LLM/dto/reply"
 	"weixin_LLM/init/common"
@@ -45,7 +44,7 @@ type WxLLMService struct {
 	self           *openwechat.Self
 	groups         openwechat.Groups
 	friends        openwechat.Friends
-	signLock       *sync.Mutex
+	//signLock       *sync.Mutex
 }
 
 func NewWxLLMService(ops ...func(c *WxLLMService)) *WxLLMService {
@@ -62,7 +61,7 @@ func NewWxLLMService(ops ...func(c *WxLLMService)) *WxLLMService {
 		replyTextChan:       make(chan *reply.Reply, constant.ReplyMaxNum),
 		replyImgChan:        make(chan *reply.ImgReply, constant.ReplyMaxNum),
 		updateChan:          make(chan struct{}, constant.UpdateMaxNum),
-		signLock:            &sync.Mutex{},
+		//signLock:            &sync.Mutex{},
 	}
 	service.friendTextProducer = []func(*openwechat.Message) (bool, error){service.tools, service.friendImgToImgMark, service.friendTextToImg, service.friendChat}
 	service.friendImgProducer = []func(*openwechat.Message) (bool, error){service.friendImgToImg}

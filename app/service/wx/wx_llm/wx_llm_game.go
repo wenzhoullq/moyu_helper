@@ -50,8 +50,8 @@ func (service *WxLLMService) upgrade(msg *openwechat.Message) (bool, error) {
 }
 
 func (service *WxLLMService) upgradeProcess(msg *openwechat.Message) error {
-	service.signLock.Lock()
-	defer service.signLock.Unlock()
+	//service.signLock.Lock()
+	//defer service.signLock.Unlock()
 	group, err := msg.Sender()
 	if err != nil {
 		return err
@@ -103,8 +103,8 @@ func (service *WxLLMService) signProcess(msg *openwechat.Message) error {
 	if msg.IsSendBySelf() {
 		return errors.New("msg send by self")
 	}
-	service.signLock.Lock()
-	defer service.signLock.Unlock()
+	//service.signLock.Lock()
+	//defer service.signLock.Unlock()
 	group, err := msg.Sender()
 	if err != nil {
 		return err

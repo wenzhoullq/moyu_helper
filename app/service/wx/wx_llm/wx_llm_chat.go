@@ -247,6 +247,10 @@ func (service *WxLLMService) NormalChatProcess(msg *openwechat.Message, user *op
 		return err
 	}
 	for len([]rune(resp.Result)) > constant.MaxAnswerLen {
+		_, err := service.wxDao.IncrKey(constant.ShortTime)
+		if err != nil {
+			return err
+		}
 		chatReq, err = service.GetChatReq(constant.Short+resp.Result, key)
 		if err != nil {
 			return err

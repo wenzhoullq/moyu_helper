@@ -132,6 +132,7 @@ const (
 )
 
 const (
+	ShortTime                = "shortTimeCnt"
 	SignTime                 = "signTimesCnt"
 	SignMark                 = "sign:"
 	ChatMark                 = "chat:"
