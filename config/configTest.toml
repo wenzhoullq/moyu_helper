@@ -2,9 +2,9 @@
 server_addr = ":8088"
 
 [qianfan_configure]
-api_key = "m6bNKukqRPWVSzonj08C1U4G"
-secret_key = "D6ltUdRFjgf4rbN72WlqDOHtlF4yfhXa"
-app_builder_key = "bce-v3/ALTAK-b51dLBazqndSeD9CPfWzB/a66ab8b9502d62179f3fda0e582bb6eb25519a69"
+api_key = ""
+secret_key = ""
+app_builder_key = ""
 aojiao_appid = "e566ffdb-bb7f-445a-b0b7-6bd805e3abd1"
 normal_appid = "7f9db346-f12c-4e2e-971c-9c6ac95fb7bc"
 
@@ -14,8 +14,8 @@ port = "6379"
 
 [mysql_configure]
 driver = "mysql"
-user_name = "root"
-pw = "li19980414"
+user_name = ""
+pw = ""
 host = "127.0.0.1"
 port = "3306"
 dbname = "wx_robot"
@@ -42,5 +42,5 @@ news_tips = "0 0 15 * *"
 regular_update = "0 0 23 * *"
 
 [tx_configure]
-secret_id = "AKID2DKct6Y8e5VwIlJrWIwnbLB4yz9OlKFC"
-secret_key = "8FPhVKbtBPf5iTJJPSBwv0tofgeYNEOh"
+secret_id = ""
+secret_key = ""
