@@ -6,7 +6,6 @@ import (
 	"github.com/eatmoreapple/openwechat"
 	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
-	"strings"
 	"weixin_LLM/dto/chat"
 	"weixin_LLM/dto/reply"
 	"weixin_LLM/lib"
@@ -56,23 +55,23 @@ func (service *WxLLMService) StoreChat(key, resp string, llmReq []*chat.ChatForm
 	return nil
 }
 func (service *WxLLMService) Forbid(content, modeType, key string, msg *openwechat.Message) (bool, error) {
-	dirtyWords := []string{"粗鲁", "不礼貌", "侮辱"}
-	//脏话封禁
-	for _, word := range dirtyWords {
-		if !strings.Contains(content, word) {
-			continue
-		}
-		err := service.wxDao.SetString(key, msg.Content, constant.ForbidForProfanity)
-		if err != nil {
-			return false, err
-		}
-		reply := &reply.Reply{
-			Content: service.ForbidChat[modeType],
-			Message: msg,
-		}
-		service.replyTextChan <- reply
-		return true, nil
-	}
+	//dirtyWords := []string{"粗鲁", "不礼貌", "侮辱"}
+	////脏话封禁
+	//for _, word := range dirtyWords {
+	//	if !strings.Contains(content, word) {
+	//		continue
+	//	}
+	//	err := service.wxDao.SetString(key, msg.Content, constant.ForbidForProfanity)
+	//	if err != nil {
+	//		return false, err
+	//	}
+	//	reply := &reply.Reply{
+	//		Content: service.ForbidChat[modeType],
+	//		Message: msg,
+	//	}
+	//	service.replyTextChan <- reply
+	//	return true, nil
+	//}
 	return false, nil
 }
 
