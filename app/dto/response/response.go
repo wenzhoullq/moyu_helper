@@ -41,3 +41,19 @@ type TxImgToImgResp struct {
 		RequestId   string `json:"RequestId"`
 	} `json:"response"`
 }
+type MeiTuanUnionOrderResp struct {
+	DataList []struct {
+		Profit string `json:"profit"`
+	} `json:"dataList"`
+}
+
+type DidiUnionResp struct {
+	Data struct {
+		OrderList []struct {
+			CPAProfit int `json:"cpa_profit"`
+			CPSProfit int `json:"cps_profit"`
+		} `json:"order_list"`
+	} `json:"data"`
+	ErrMsg string `json:"errmsg"`
+	Errno  int    `json:"errno"`
+}

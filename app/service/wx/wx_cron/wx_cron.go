@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"github.com/eatmoreapple/openwechat"
 	"github.com/sirupsen/logrus"
+	"strconv"
 	"time"
 	"weixin_LLM/dao"
 	holiday2 "weixin_LLM/dto/holiday"
 	"weixin_LLM/init/common"
+	"weixin_LLM/init/config"
 	"weixin_LLM/lib"
 	"weixin_LLM/lib/client"
 	"weixin_LLM/lib/constant"
@@ -17,20 +19,33 @@ type WxCronService struct {
 	*openwechat.Bot
 	*logrus.Logger
 	*client.ZhiHuClient
+	*client.EleUnionClient
+	*client.MeiTuanUnionClient
+	*client.DidiUnionClient
 	groups    openwechat.Groups
 	wxDao     *dao.WxDao
 	sourceDao *dao.SourceDao
 	self      *openwechat.Self
+	friends   openwechat.Friends
 }
 
 func NewWxCronService(ops ...func(*WxCronService)) *WxCronService {
 	service := &WxCronService{
-		ZhiHuClient: client.NewZhiHuClient(),
+		ZhiHuClient:        client.NewZhiHuClient(),
+		EleUnionClient:     client.NewEleUnionClient(client.SetEleUnionAppKey(config.Config.EleConfigure.AppKey), client.SetEleUnionSecret(config.Config.EleConfigure.Secret)),
+		MeiTuanUnionClient: client.NewMeiTuanUnionClient(client.SetMeiTuanUnionAppKey(config.Config.MeiTuanConfigure.AppKey), client.SetMeiTuanUnionApiToken(config.Config.MeiTuanConfigure.ApiToken)),
+		DidiUnionClient:    client.NewDidiUnionClient(client.SetDidiUnionAppKey(config.Config.DiDiConfigure.AppKey), client.SetDidiUnionAccessKey(config.Config.DiDiConfigure.AccessKey)),
 	}
 	for _, op := range ops {
 		op(service)
 	}
 	return service
+}
+
+func SetWxCronFriends(friends openwechat.Friends) func(*WxCronService) {
+	return func(wls *WxCronService) {
+		wls.friends = friends
+	}
 }
 
 func SetSelf(self *openwechat.Self) func(*WxCronService) {
@@ -182,6 +197,7 @@ func (service *WxCronService) RegularUpdate() {
 		service.Logln(logrus.ErrorLevel, err.Error())
 	}
 }
+
 func (service *WxCronService) RegularSource() error {
 	sources, err := service.sourceDao.GetNotExpSources()
 	if err != nil {
@@ -286,4 +302,41 @@ func (service *WxCronService) getGroupUserIDToUserNameMap() (map[string]map[stri
 		}
 	}
 	return usersMap, nil
+}
+
+func (service *WxCronService) RegularSendDailyProfit() {
+	//计算didi收益
+	didiResp, err := service.DidiUnionClient.GetTodayProfit()
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return
+	}
+	var didiProfit float64
+	for _, v := range didiResp.Data.OrderList {
+		//单位为分
+		didiProfit += float64(v.CPAProfit)/100 + float64(v.CPSProfit)/100
+	}
+	//计算美团收益
+	var meiTuanProfit = 0.0
+	meiTuanResp, err := service.MeiTuanUnionClient.GetTodayProfit()
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return
+	}
+	for _, v := range meiTuanResp.DataList {
+		f, err := strconv.ParseFloat(v.Profit, 64)
+		if err != nil {
+			panic(err)
+		}
+		meiTuanProfit += f
+	}
+	totalProfit := meiTuanProfit + didiProfit
+	//发送每日收益
+	user := service.friends.GetByNickName(constant.SendDailyProfitUser)
+	_, err = user.SendText(fmt.Sprintf(constant.DailyProfit, meiTuanProfit, didiProfit, totalProfit))
+	if err != nil {
+		service.Logln(logrus.ErrorLevel, err.Error())
+		return
+	}
+	return
 }

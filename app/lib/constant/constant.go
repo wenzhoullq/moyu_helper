@@ -46,7 +46,8 @@ const (
 	WednesdayAd                     = "周三神券节,领取美团外卖红包必得9元红包。\n"
 	ModeChatSet                     = "已切换为%s对话模式"
 	ModeImgSet                      = "已切换为%s生图模式"
-	ModeChatSetFail                 = "无该模式"
+	DailyProfit                     = "今日收益:\n美团:%.2f元。\n滴滴:%.2f元。\n总收益:%.2f元。"
+	SendDailyProfitUser             = "哥哥"
 )
 const (
 	SignSuccess = 0
@@ -173,4 +174,9 @@ const (
 	ServerErr
 	DBErr
 	ClientErr
+)
+const (
+	MeiTuanUnionLimit = "100"
+	MeiTuanUnionPage  = "1"
+	MeiTuanActID      = "33"
 )

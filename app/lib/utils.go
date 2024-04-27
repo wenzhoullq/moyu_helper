@@ -52,6 +52,12 @@ func GetCurTime() string {
 	return formatted
 }
 
+func GetCurTimeDetail(year int, month int, day int) string {
+	t := time.Now().AddDate(year, month, day)
+	formatted := t.Format("2006-01-02 15:04:05")
+	return formatted
+}
+
 func NextSaturday() time.Time {
 	now := time.Now() // 获取当前时间
 	for {
@@ -90,6 +96,11 @@ func ProcessingCommands(str string) string {
 		str = strings.ToUpper(str)
 	}
 	return str
+}
+
+func GetUnix(year int, month int, day int) int64 {
+	t := time.Now().AddDate(year, month, day)
+	return t.Unix()
 }
 
 func Max(a, b int) int {

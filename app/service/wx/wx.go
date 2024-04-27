@@ -25,6 +25,7 @@ type WxService struct {
 	groupSend  []func(*openwechat.Message) (bool, error)
 	friendSend []func(*openwechat.Message) (bool, error)
 	groups     openwechat.Groups
+	friends    openwechat.Friends
 }
 
 func NewWxService() *WxService {
@@ -184,6 +185,7 @@ func (ws *WxService) InitWxRobot() error {
 	ws.groups = groups
 	ws.Logln(logrus.InfoLevel, groups)
 
+	ws.friends = friends
 	//初始化WxLLM
 	ws.WxLLMService = wx_llm.NewWxLLMService(wx_llm.SetSelf(self), wx_llm.SetGroups(groups), wx_llm.SetFriends(friends),
 		wx_llm.SetLog(ws.Logger), wx_llm.SetWxDao(ws.wxDao))
@@ -215,7 +217,8 @@ func (ws *WxService) InitWxRobot() error {
 	}
 	//初始化WxCron
 	ws.WxCronService = wx_cron.NewWxCronService(wx_cron.SetWxCronServiceWxDao(ws.wxDao), wx_cron.SetWxCronServiceSourceDao(ws.sourceDao),
-		wx_cron.SetSelf(self), wx_cron.SetBot(ws.Bot), wx_cron.SetWxCronGroups(groups), wx_cron.SetWxCronServiceLog(ws.Logger))
+		wx_cron.SetSelf(self), wx_cron.SetBot(ws.Bot), wx_cron.SetWxCronGroups(groups), wx_cron.SetWxCronFriends(friends),
+		wx_cron.SetWxCronServiceLog(ws.Logger))
 	//初始化,批量更新userID
 	err = ws.ReloadAndUpdateUserName()
 	if err != nil {
@@ -241,6 +244,7 @@ func (ws *WxService) InitWxRobot() error {
 	if err != nil {
 		return err
 	}
+	err = c.AddFunc(config.Config.RegularSendDailyProfit, ws.RegularSendDailyProfit)
 	c.Start()
 	return nil
 }

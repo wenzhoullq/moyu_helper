@@ -11,8 +11,24 @@ type Configuration struct {
 	CronTaskConfigure `toml:"corn_task_configure"`
 	TanshuConfigure   `toml:"tanshu_configure"`
 	TxConfigure       `toml:"tx_configure"`
+	EleConfigure      `toml:"ele_configure"`
+	MeiTuanConfigure  `toml:"meituan_configure"`
+	DiDiConfigure     `toml:"didi_configure"`
 }
 
+type EleConfigure struct {
+	AppKey string `toml:"app_key"`
+	Secret string `toml:"secret"`
+}
+
+type MeiTuanConfigure struct {
+	AppKey   string `toml:"app_key"`
+	ApiToken string `toml:"api_token"`
+}
+type DiDiConfigure struct {
+	AppKey    string `toml:"app_key"`
+	AccessKey string `toml:"access_key"`
+}
 type TxConfigure struct {
 	SecretId  string `toml:"secret_id"`
 	SecretKey string `toml:"secret_key"`
@@ -68,7 +84,8 @@ type TanshuConfigure struct {
 }
 
 type CronTaskConfigure struct {
-	HolidayTips   string `toml:"holiday_tips"`
-	NewsTips      string `toml:"news_tips"`
-	RegularUpdate string `toml:"regular_update"`
+	HolidayTips            string `toml:"holiday_tips"`
+	NewsTips               string `toml:"news_tips"`
+	RegularUpdate          string `toml:"regular_update"`
+	RegularSendDailyProfit string `toml:"regular_send_daily_profit"`
 }
