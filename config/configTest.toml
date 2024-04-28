@@ -35,12 +35,26 @@ sign_reward_else = 50
 holiday_file = "../file/holiday"
 img_file = "../file/img/"
 ele_poster_file = "../file/ele.jpg"
+draw_lots_file = "../file/drawLots/"
 
 [corn_task_configure]
 holiday_tips = "0 10 10 * *"
 news_tips = "0 0 15 * *"
 regular_update = "0 0 23 * *"
+regular_send_daily_profit = "0 0 9 * *"
 
 [tx_configure]
 secret_id = "AKID2DKct6Y8e5VwIlJrWIwnbLB4yz9OlKFC"
 secret_key = "8FPhVKbtBPf5iTJJPSBwv0tofgeYNEOh"
+
+[meituan_configure]
+app_key = "7408dbe10d95bf09296d40438e1676fa"
+api_token = "346cbf664e2973c1847fda08aa0850a1"
+
+[didi_configure]
+app_key = "RHGT5qea80y9bFxK"
+access_key = "o459DU6ZaZMFcifNVJBdEAAQ63TiQc9x"
+
+[ele_configure]
+app_key = "7408dbe10d95bf09296d40438e1676fa"
+secret = ""

@@ -107,7 +107,7 @@ func (wd *WxDao) GetString(key string) (string, error) {
 	}
 	return str, nil
 }
-func (wd *WxDao) SetString(key string, value interface{}, exp int) error {
+func (wd *WxDao) SetString(key string, value interface{}, exp int64) error {
 	err := wd.redisClient.Set(wd.Context, key, value, time.Duration(exp*1000000000)).Err()
 	if err != nil {
 		return err

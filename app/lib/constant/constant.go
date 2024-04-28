@@ -18,6 +18,8 @@ const (
 	TextToImgKeyWord = "画"
 	EleKeyWord       = "饿了么"
 	Upgrade          = "升级"
+	DrawLots         = "抽签"
+	UnDrawLots       = "解签"
 )
 
 const (
@@ -46,8 +48,9 @@ const (
 	WednesdayAd                     = "周三神券节,领取美团外卖红包必得9元红包。\n"
 	ModeChatSet                     = "已切换为%s对话模式"
 	ModeImgSet                      = "已切换为%s生图模式"
-	DailyProfit                     = "今日收益:\n美团:%.2f元。\n滴滴:%.2f元。\n总收益:%.2f元。"
+	DailyProfit                     = "昨日收益:\n美团:%.2f元。\n滴滴:%.2f元。\n总收益:%.2f元。"
 	SendDailyProfitUser             = "哥哥"
+	UnDrawLotsSuf                   = "诸葛灵签解签:\n%s"
 )
 const (
 	SignSuccess = 0
@@ -143,6 +146,7 @@ const (
 	ForbidForProfanity       = 60
 	ImgToImgMark             = "imgToImg:"
 	FriendImgToImgMark       = "friendImgToImg:"
+	GroupDrawLotsMark        = "groupDrawLots:"
 	ChatMode                 = "ChatMode:"
 	ImgMode                  = "ImgMode:"
 	ModeExp                  = -1

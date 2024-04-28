@@ -87,13 +87,15 @@ func SetBot(bot *openwechat.Bot) func(service *WxCronService) {
 func (service *WxCronService) isWorkDay() bool {
 	today := time.Now().Format("2006-01-02")
 	weekday := time.Now().Weekday()
-	//今天是日历上的一天，但调休
+	//节假日
 	if len(common.Holidays) > 0 && today == common.Holidays[0].Date && common.Holidays[0].IsOffDay {
 		return false
 	}
-	// 今天不是周六周末
+	// 周六周末
 	if weekday == time.Saturday || weekday == time.Sunday {
-		return false
+		if len(common.Holidays) > 0 && today == common.Holidays[0].Date && common.Holidays[0].IsOffDay {
+			return false
+		}
 	}
 	return true
 }
@@ -107,7 +109,6 @@ func (service *WxCronService) SendHolidayTips() {
 	}
 	// 判断是否是工作日
 	if !service.isWorkDay() {
-		service.Log(logrus.InfoLevel, "today is ", today, " ,this day is not workday")
 		return
 	}
 	//下一个休息日数组
@@ -203,7 +204,7 @@ func (service *WxCronService) RegularSource() error {
 	if err != nil {
 		return err
 	}
-	for i, _ := range sources {
+	for i := range sources {
 		s := sources[i]
 		exp, err := lib.TimeHasExp(s.SourceExp)
 		if err != nil {

@@ -2,7 +2,6 @@ package wx_llm
 
 import (
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"github.com/eatmoreapple/openwechat"
 	"github.com/go-redis/redis/v8"
@@ -153,7 +152,7 @@ func (service *WxLLMService) DailyFreeTimeCheck(user *openwechat.User, msg *open
 			Message: msg,
 			Content: constant.ExDailyMAXFreeImgTransTimeReply,
 		}
-		return false, errors.New("transToImg times more than daily")
+		return false, nil
 	}
 	return true, nil
 }

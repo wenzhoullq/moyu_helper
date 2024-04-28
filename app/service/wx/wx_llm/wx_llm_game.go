@@ -7,6 +7,9 @@ import (
 	"github.com/eatmoreapple/openwechat"
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
+	"io/ioutil"
+	"math/rand"
+	"strings"
 	"time"
 	"weixin_LLM/dto/reply"
 	uu "weixin_LLM/dto/user"
@@ -28,6 +31,22 @@ func (service *WxLLMService) game(msg *openwechat.Message) (bool, error) {
 	return false, nil
 }
 
+func (service *WxLLMService) unDrawLots(msg *openwechat.Message) (bool, error) {
+	if msg.Content != constant.UnDrawLots {
+		return false, nil
+	}
+	service.unDrawLotsChan <- msg
+	return true, nil
+}
+
+func (service *WxLLMService) drawLots(msg *openwechat.Message) (bool, error) {
+	if msg.Content != constant.DrawLots {
+		return false, nil
+	}
+	service.drawLotsChan <- msg
+	return true, nil
+}
+
 func (service *WxLLMService) upgrade(msg *openwechat.Message) (bool, error) {
 	if msg.Content != constant.Upgrade {
 		return false, nil
@@ -47,6 +66,59 @@ func (service *WxLLMService) upgrade(msg *openwechat.Message) (bool, error) {
 	service.upgradeChan <- msg
 	return true, nil
 
+}
+
+func (service *WxLLMService) redisKeyGroupDrawLotsMark(user *openwechat.User) string {
+	return fmt.Sprintf("%s%s", constant.GroupDrawLotsMark, user.UserName)
+}
+func (service *WxLLMService) unDrawLotsProcess(msg *openwechat.Message) error {
+	user, err := msg.SenderInGroup()
+	if err != nil {
+		return err
+	}
+	key := service.redisKeyGroupDrawLotsMark(user)
+	value, err := service.wxDao.GetString(key)
+	if err != nil {
+		return err
+	}
+	service.replyTextChan <- &reply.Reply{
+		Message: msg,
+		Content: fmt.Sprintf(constant.UnDrawLotsSuf, value),
+	}
+	return nil
+}
+func (service *WxLLMService) drawLotsProcess(msg *openwechat.Message) error {
+	//发送图片
+	folderPath := config.Config.FileConfigure.DrawLotsFile
+	files, err := ioutil.ReadDir(folderPath)
+	if err != nil {
+		return err
+	}
+	// 如果文件夹为空，提前返回
+	if len(files) == 0 {
+		return err
+	}
+	// 随机选择一个文件
+	randomIndex := rand.Intn(len(files))
+	randomFile := files[randomIndex]
+	fileName := randomFile.Name()
+	// 输出随机选择的文件名
+	service.replyImgChan <- &reply.ImgReply{
+		Message: msg,
+		Path:    folderPath + fileName,
+	}
+	text := strings.Split(fileName, ".jpg")
+	//记录解签
+	user, err := msg.SenderInGroup()
+	if err != nil {
+		return err
+	}
+	key := service.redisKeyGroupDrawLotsMark(user)
+	err = service.wxDao.SetString(key, text[0], lib.SecondsUntilMidnight())
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (service *WxLLMService) upgradeProcess(msg *openwechat.Message) error {
