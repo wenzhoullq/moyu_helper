@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/eatmoreapple/openwechat"
+	"github.com/go-redis/redis/v8"
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
@@ -35,6 +36,22 @@ func (service *WxLLMService) unDrawLots(msg *openwechat.Message) (bool, error) {
 	if msg.Content != constant.UnDrawLots {
 		return false, nil
 	}
+	user, err := msg.SenderInGroup()
+	if err != nil {
+		return true, err
+	}
+	key := service.redisKeyGroupDrawLotsMark(user)
+	_, err = service.wxDao.GetString(key)
+	if err != nil {
+		if err == redis.Nil {
+			service.replyTextChan <- &reply.Reply{
+				Message: msg,
+				Content: constant.UnHasDrawLots,
+			}
+			return true, nil
+		}
+		return true, err
+	}
 	service.unDrawLotsChan <- msg
 	return true, nil
 }
@@ -43,7 +60,24 @@ func (service *WxLLMService) drawLots(msg *openwechat.Message) (bool, error) {
 	if msg.Content != constant.DrawLots {
 		return false, nil
 	}
-	service.drawLotsChan <- msg
+	user, err := msg.SenderInGroup()
+	if err != nil {
+		return true, err
+	}
+	key := service.redisKeyGroupDrawLotsMark(user)
+	_, err = service.wxDao.GetString(key)
+	if err != nil {
+		if err == redis.Nil {
+			service.drawLotsChan <- msg
+			return true, nil
+		}
+		return true, err
+	}
+	//已经抽过签了
+	service.replyTextChan <- &reply.Reply{
+		Message: msg,
+		Content: constant.HasDraw,
+	}
 	return true, nil
 }
 
@@ -83,7 +117,7 @@ func (service *WxLLMService) unDrawLotsProcess(msg *openwechat.Message) error {
 	}
 	service.replyTextChan <- &reply.Reply{
 		Message: msg,
-		Content: fmt.Sprintf(constant.UnDrawLotsSuf, value),
+		Content: fmt.Sprintf(constant.UnDrawLotsSuf, user.DisplayName, value),
 	}
 	return nil
 }

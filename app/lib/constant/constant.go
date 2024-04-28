@@ -50,7 +50,9 @@ const (
 	ModeImgSet                      = "已切换为%s生图模式"
 	DailyProfit                     = "昨日收益:\n美团:%.2f元。\n滴滴:%.2f元。\n总收益:%.2f元。"
 	SendDailyProfitUser             = "哥哥"
-	UnDrawLotsSuf                   = "诸葛灵签解签:\n%s"
+	UnDrawLotsSuf                   = "解@%s的签:\n%s"
+	HasDraw                         = "今日已抽过签,请明天再来~"
+	UnHasDrawLots                   = "今日还未抽签,请抽签后再进行解签~"
 )
 const (
 	SignSuccess = 0

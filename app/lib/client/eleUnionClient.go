@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strings"
 	"weixin_LLM/lib"
-	"weixin_LLM/lib/constant"
 )
 
 type EleUnionClient struct {
@@ -37,13 +36,13 @@ func SetEleUnionSecret(secret string) func(client *EleUnionClient) {
 		client.secret = secret
 	}
 }
-func (client *EleUnionClient) GetProfit() error {
-	url := "http://gw.api.taobao.com/router/rest"
+func (client *EleUnionClient) GetTodayProfit() error {
+	url := "https://eco.taobao.com/router/rest"
 	queryMap := map[string]string{
+		"method":      "alibaba.alsc.union.kbcpx.positive.order.get",
 		"app_key":     client.appKey,
 		"timestamp":   lib.GetCurTimeDetail(0, 0, 0),
 		"v":           "2.0",
-		"actId":       constant.MeiTuanActID,
 		"startTime":   fmt.Sprintf("%d", lib.GetUnix(0, 0, -1)),
 		"endTime":     fmt.Sprintf("%d", lib.GetUnix(0, 0, 0)),
 		"sign_method": "md5",
@@ -56,11 +55,12 @@ func (client *EleUnionClient) GetProfit() error {
 		"start_date":  lib.GetCurTimeDetail(0, 0, -1),
 		"end_date":    lib.GetCurTimeDetail(0, 0, 0),
 	}
-	sign, err := client.signTopRequest(queryMap, "")
+	sign, err := client.signTopRequest(queryMap, client.secret)
+	fmt.Println(sign)
 	if err != nil {
 		return err
 	}
-	queryMap[sign] = sign
+	queryMap["sign"] = sign
 	resp, err := client.Client.R().
 		SetQueryParams(queryMap).
 		Get(url)
