@@ -148,7 +148,7 @@ const (
 	ForbidForProfanity       = 60
 	ImgToImgMark             = "imgToImg:"
 	FriendImgToImgMark       = "friendImgToImg:"
-	GroupDrawLotsMark        = "groupDrawLots:"
+	GroupDrawLotsMark        = "groupDrawLots:%s-%s"
 	ChatMode                 = "ChatMode:"
 	ImgMode                  = "ImgMode:"
 	ModeExp                  = -1

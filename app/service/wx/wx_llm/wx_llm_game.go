@@ -40,7 +40,11 @@ func (service *WxLLMService) unDrawLots(msg *openwechat.Message) (bool, error) {
 	if err != nil {
 		return true, err
 	}
-	key := service.redisKeyGroupDrawLotsMark(user)
+	group, err := msg.Sender()
+	if err != nil {
+		return true, err
+	}
+	key := service.redisKeyGroupDrawLotsMark(user, group)
 	_, err = service.wxDao.GetString(key)
 	if err != nil {
 		if err == redis.Nil {
@@ -64,7 +68,11 @@ func (service *WxLLMService) drawLots(msg *openwechat.Message) (bool, error) {
 	if err != nil {
 		return true, err
 	}
-	key := service.redisKeyGroupDrawLotsMark(user)
+	group, err := msg.Sender()
+	if err != nil {
+		return true, err
+	}
+	key := service.redisKeyGroupDrawLotsMark(user, group)
 	_, err = service.wxDao.GetString(key)
 	if err != nil {
 		if err == redis.Nil {
@@ -102,15 +110,16 @@ func (service *WxLLMService) upgrade(msg *openwechat.Message) (bool, error) {
 
 }
 
-func (service *WxLLMService) redisKeyGroupDrawLotsMark(user *openwechat.User) string {
-	return fmt.Sprintf("%s%s", constant.GroupDrawLotsMark, user.UserName)
+func (service *WxLLMService) redisKeyGroupDrawLotsMark(user *openwechat.User, group *openwechat.User) string {
+	return fmt.Sprintf(constant.GroupDrawLotsMark, group.UserName, user.UserName)
 }
 func (service *WxLLMService) unDrawLotsProcess(msg *openwechat.Message) error {
 	user, err := msg.SenderInGroup()
 	if err != nil {
 		return err
 	}
-	key := service.redisKeyGroupDrawLotsMark(user)
+	group, err := msg.Sender()
+	key := service.redisKeyGroupDrawLotsMark(user, group)
 	value, err := service.wxDao.GetString(key)
 	if err != nil {
 		return err
@@ -147,7 +156,11 @@ func (service *WxLLMService) drawLotsProcess(msg *openwechat.Message) error {
 	if err != nil {
 		return err
 	}
-	key := service.redisKeyGroupDrawLotsMark(user)
+	group, err := msg.Sender()
+	if err != nil {
+		return err
+	}
+	key := service.redisKeyGroupDrawLotsMark(user, group)
 	err = service.wxDao.SetString(key, text[0], lib.SecondsUntilMidnight())
 	if err != nil {
 		return err
