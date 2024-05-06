@@ -36,6 +36,7 @@ holiday_file = "../file/holiday"
 img_file = "../file/img/"
 ele_poster_file = "../file/ele.jpg"
 draw_lots_file = "../file/drawLots/"
+zodiac_blind_box_file = "../file/zodiacSign/"
 
 [corn_task_configure]
 holiday_tips = "0 10 10 * *"

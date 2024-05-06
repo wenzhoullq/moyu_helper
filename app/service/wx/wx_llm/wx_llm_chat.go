@@ -216,7 +216,7 @@ func (service *WxLLMService) NormalChatProcess(msg *openwechat.Message, user *op
 		return nil
 	}
 	key := constant.ChatMark + user.UserName
-	chatReq, err := service.GetChatReq(constant.PreContent+msg.Content, key)
+	chatReq, err := service.GetChatReq(msg.Content, key)
 	if err != nil {
 		return err
 	}

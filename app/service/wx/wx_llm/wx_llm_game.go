@@ -89,6 +89,39 @@ func (service *WxLLMService) drawLots(msg *openwechat.Message) (bool, error) {
 	return true, nil
 }
 
+func (service *WxLLMService) redisKeyGroupZodiacBlindBox(user *openwechat.User, group *openwechat.User) string {
+	return fmt.Sprintf(constant.GroupZodiacBlindBoxMark, group.UserName, user.UserName)
+}
+
+func (service *WxLLMService) zodiacBlindBox(msg *openwechat.Message) (bool, error) {
+	if msg.Content != constant.ZodiacBlindBox {
+		return false, nil
+	}
+	user, err := msg.SenderInGroup()
+	if err != nil {
+		return true, err
+	}
+	group, err := msg.Sender()
+	if err != nil {
+		return true, err
+	}
+	key := service.redisKeyGroupZodiacBlindBox(user, group)
+	_, err = service.wxDao.GetString(key)
+	if err != nil {
+		if err == redis.Nil {
+			service.zodiacBlindBoxChan <- msg
+			return true, nil
+		}
+		return true, err
+	}
+	//已经抽过签了
+	service.replyTextChan <- &reply.Reply{
+		Message: msg,
+		Content: constant.HasZodiacBlindBox,
+	}
+	return true, nil
+}
+
 func (service *WxLLMService) upgrade(msg *openwechat.Message) (bool, error) {
 	if msg.Content != constant.Upgrade {
 		return false, nil
@@ -130,16 +163,15 @@ func (service *WxLLMService) unDrawLotsProcess(msg *openwechat.Message) error {
 	}
 	return nil
 }
-func (service *WxLLMService) drawLotsProcess(msg *openwechat.Message) error {
-	//发送图片
-	folderPath := config.Config.FileConfigure.DrawLotsFile
-	files, err := ioutil.ReadDir(folderPath)
+
+func (service *WxLLMService) randomSend(path string, msg *openwechat.Message) (string, error) {
+	files, err := ioutil.ReadDir(path)
 	if err != nil {
-		return err
+		return "", err
 	}
 	// 如果文件夹为空，提前返回
 	if len(files) == 0 {
-		return err
+		return "", err
 	}
 	// 随机选择一个文件
 	randomIndex := rand.Intn(len(files))
@@ -148,10 +180,46 @@ func (service *WxLLMService) drawLotsProcess(msg *openwechat.Message) error {
 	// 输出随机选择的文件名
 	service.replyImgChan <- &reply.ImgReply{
 		Message: msg,
-		Path:    folderPath + fileName,
+		Path:    path + fileName,
 	}
-	text := strings.Split(fileName, ".jpg")
-	//记录解签
+	texts := strings.Split(fileName, ".jpg")
+	return texts[0], nil
+}
+
+func (service *WxLLMService) zodiacBlindBoxProcess(msg *openwechat.Message) error {
+	text, err := service.randomSend(config.Config.FileConfigure.ZodiacBlindBoxFile, msg)
+	if err != nil {
+		return err
+	}
+	user, err := msg.SenderInGroup()
+	if err != nil {
+		return err
+	}
+	group, err := msg.Sender()
+	if err != nil {
+		return err
+	}
+	//记录抽生肖盲盒
+	key := service.redisKeyGroupZodiacBlindBox(user, group)
+	err = service.wxDao.SetString(key, text, lib.SecondsUntilMidnight())
+	if err != nil {
+		return err
+	}
+	//发送抽中的盲盒信息
+	service.replyTextChan <- &reply.Reply{
+		Message: msg,
+		Content: fmt.Sprintf(constant.ZodiacBlindBoxSuf, text),
+	}
+	return nil
+}
+
+func (service *WxLLMService) drawLotsProcess(msg *openwechat.Message) error {
+	//发送图片
+	text, err := service.randomSend(config.Config.FileConfigure.DrawLotsFile, msg)
+	if err != nil {
+		return err
+	}
+	//记录抽签
 	user, err := msg.SenderInGroup()
 	if err != nil {
 		return err
@@ -161,7 +229,7 @@ func (service *WxLLMService) drawLotsProcess(msg *openwechat.Message) error {
 		return err
 	}
 	key := service.redisKeyGroupDrawLotsMark(user, group)
-	err = service.wxDao.SetString(key, text[0], lib.SecondsUntilMidnight())
+	err = service.wxDao.SetString(key, text, lib.SecondsUntilMidnight())
 	if err != nil {
 		return err
 	}

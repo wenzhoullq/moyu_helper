@@ -23,6 +23,7 @@ type WxLLMService struct {
 	signChan            chan *openwechat.Message
 	drawLotsChan        chan *openwechat.Message
 	unDrawLotsChan      chan *openwechat.Message
+	zodiacBlindBoxChan  chan *openwechat.Message
 	friendTextToImgChan chan *openwechat.Message
 	groupTextToImgChan  chan *openwechat.Message
 	friendImgToImgChan  chan *openwechat.Message
@@ -57,6 +58,7 @@ func NewWxLLMService(ops ...func(c *WxLLMService)) *WxLLMService {
 		signChan:            make(chan *openwechat.Message, constant.GameMaxNum),
 		drawLotsChan:        make(chan *openwechat.Message, constant.GameMaxNum),
 		unDrawLotsChan:      make(chan *openwechat.Message, constant.GameMaxNum),
+		zodiacBlindBoxChan:  make(chan *openwechat.Message, constant.GameMaxNum),
 		upgradeChan:         make(chan *openwechat.Message, constant.GameMaxNum),
 		friendTextToImgChan: make(chan *openwechat.Message, constant.ReplyPicMaxNum),
 		groupTextToImgChan:  make(chan *openwechat.Message, constant.ReplyPicMaxNum),
@@ -71,7 +73,7 @@ func NewWxLLMService(ops ...func(c *WxLLMService)) *WxLLMService {
 	service.friendImgProducer = []func(*openwechat.Message) (bool, error){service.friendImgToImg}
 	service.groupTextProducer = []func(*openwechat.Message) (bool, error){service.game, service.tools, service.groupMark, service.groupTextToImg, service.groupChat}
 	service.groupImgProducer = []func(*openwechat.Message) (bool, error){service.groupImgToImg}
-	service.groupGameProducer = []func(message *openwechat.Message) (bool, error){service.sign, service.upgrade, service.drawLots, service.unDrawLots}
+	service.groupGameProducer = []func(message *openwechat.Message) (bool, error){service.sign, service.upgrade, service.drawLots, service.unDrawLots, service.zodiacBlindBox}
 	service.groupMarkProducer = []func(message *openwechat.Message) (bool, error){service.groupImgToImgMark, service.ModeChangeMark}
 	service.GroupChatModel = map[string]func(*openwechat.Message, *openwechat.User) error{
 		constant.NorMalModeChat: service.NormalChatProcess,
@@ -163,6 +165,12 @@ func (service *WxLLMService) Process() {
 				}
 			case msg := <-service.unDrawLotsChan:
 				err := service.unDrawLotsProcess(msg)
+				if err != nil {
+					service.Logln(logrus.ErrorLevel, err.Error())
+					continue
+				}
+			case msg := <-service.zodiacBlindBoxChan:
+				err := service.zodiacBlindBoxProcess(msg)
 				if err != nil {
 					service.Logln(logrus.ErrorLevel, err.Error())
 					continue

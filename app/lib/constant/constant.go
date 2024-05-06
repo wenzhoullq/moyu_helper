@@ -20,6 +20,7 @@ const (
 	Upgrade          = "升级"
 	DrawLots         = "抽签"
 	UnDrawLots       = "解签"
+	ZodiacBlindBox   = "生肖盲盒"
 )
 
 const (
@@ -45,13 +46,17 @@ const (
 	AoJiaoModelForbidDirty          = "你说话太没有礼貌了,我不想跟你说话了!"
 	ExDailyMAXFreeImgTransTimeReply = "今日免费生图功能次数已用完,请明日再来使用"
 	HolidayTip                      = "【摸鱼小助手】提醒您:各位摸鱼人上午好🌹！\n工作再累，一定不要忘记摸🐟！有事没事起身去茶水间、去厕所、去廊道走走，别老在工位上坐着，💴是老板的，但命是自己的！\n"
-	WednesdayAd                     = "周三神券节,领取美团外卖红包必得9元红包。\n"
+	WednesdayAd                     = "周三神券节,@摸鱼小助手发送 美团外卖 必得9元红包。\n"
+	DailyAd                         = "@摸鱼小助手发送美团/饿了么领取8元红包，发送滴滴打车领取优惠券。\n"
+	WeekendAd                       = "@摸鱼小助手发送美团/饿了么领取8元红包，发送滴滴打车领取五折优惠券。\n"
 	ModeChatSet                     = "已切换为%s对话模式"
 	ModeImgSet                      = "已切换为%s生图模式"
 	DailyProfit                     = "昨日收益:\n美团:%.2f元。\n滴滴:%.2f元。\n总收益:%.2f元。"
 	SendDailyProfitUser             = "哥哥"
 	UnDrawLotsSuf                   = "解@%s的签:\n%s"
+	ZodiacBlindBoxSuf               = "恭喜您抽中了%s"
 	HasDraw                         = "今日已抽过签,请明天再来~"
+	HasZodiacBlindBox               = "今日已抽过生肖盲盒,请明天再来~"
 	UnHasDrawLots                   = "今日还未抽签,请抽签后再进行解签~"
 )
 const (
@@ -149,6 +154,7 @@ const (
 	ImgToImgMark             = "imgToImg:"
 	FriendImgToImgMark       = "friendImgToImg:"
 	GroupDrawLotsMark        = "groupDrawLots:%s-%s"
+	GroupZodiacBlindBoxMark  = "groupZodiacBlindBox:%s-%s"
 	ChatMode                 = "ChatMode:"
 	ImgMode                  = "ImgMode:"
 	ModeExp                  = -1

@@ -26,7 +26,7 @@ func TestMeiTuan(t *testing.T) {
 	for _, v := range resp.DataList {
 		f, err := strconv.ParseFloat(v.Profit, 64)
 		if err != nil {
-			panic(err)
+			continue
 		}
 		cnt += f
 	}

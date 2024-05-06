@@ -148,6 +148,12 @@ func (service *WxCronService) SendHolidayTips() {
 		}
 	}
 	holidayTip := holidayTipPre + ad + holidayTipSuf
+	//发送前更新
+	err := service.self.UpdateMembersDetail()
+	if err != nil {
+		service.Log(logrus.ErrorLevel, err.Error())
+		return
+	}
 	for _, group := range service.groups {
 		_, err := group.SendText(holidayTip)
 		if err != nil {
@@ -177,7 +183,15 @@ func (service *WxCronService) SendNews() {
 		}
 		newsSuf += fmt.Sprintf("%d.%s\n %s \n", i+1, v.Target.Title, v.Target.URL)
 	}
-	news := newsPre + newsSuf
+	ad := common.AdMap[time.Now().Weekday()]
+	news := newsPre + ad + newsSuf
+	//发送前更新
+	err = service.self.UpdateMembersDetail()
+	if err != nil {
+		service.Log(logrus.ErrorLevel, err.Error())
+		return
+	}
+
 	for _, group := range service.groups {
 		_, err := group.SendText(news)
 		if err != nil {
@@ -327,7 +341,8 @@ func (service *WxCronService) RegularSendDailyProfit() {
 	for _, v := range meiTuanResp.DataList {
 		f, err := strconv.ParseFloat(v.Profit, 64)
 		if err != nil {
-			panic(err)
+			service.Logln(logrus.ErrorLevel, err.Error())
+			continue
 		}
 		meiTuanProfit += f
 	}

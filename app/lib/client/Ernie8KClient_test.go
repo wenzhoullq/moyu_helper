@@ -21,7 +21,7 @@ func TestErnie8KChat(t *testing.T) {
 	EClient := NewErnie8KClient(SetToken(token))
 	msgConetent := append(make([]*chat.ChatForm, 0), &chat.ChatForm{
 		Role:    "user",
-		Content: "你是傻逼",
+		Content: "你中午吃什么",
 	})
 	res, err := EClient.Chat(msgConetent)
 	if err != nil {

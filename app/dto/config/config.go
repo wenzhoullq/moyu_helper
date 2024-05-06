@@ -35,10 +35,11 @@ type TxConfigure struct {
 }
 
 type FileConfigure struct {
-	HolidayFile   string `toml:"holiday_file"`
-	ImgFile       string `toml:"img_file"`
-	ElePosterFile string `toml:"ele_poster_file"`
-	DrawLotsFile  string `toml:"draw_lots_file"`
+	HolidayFile        string `toml:"holiday_file"`
+	ImgFile            string `toml:"img_file"`
+	ElePosterFile      string `toml:"ele_poster_file"`
+	DrawLotsFile       string `toml:"draw_lots_file"`
+	ZodiacBlindBoxFile string `toml:"zodiac_blind_box_file"`
 }
 
 type SignConfigure struct {
