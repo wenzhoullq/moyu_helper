@@ -24,7 +24,7 @@ func NewSourceDao(ops ...func(c *SourceDao)) *SourceDao {
 func (sd *SourceDao) GetNotExpSources() ([]*source.Source, error) {
 	sourceList := make([]*source.Source, 0)
 	source := &source.Source{}
-	if err := sd.Table(source.TableName()).Where(" status = ?", constant.SourceNorMal).Find(&sourceList).Error; err != nil {
+	if err := sd.Table(source.TableName()).Where("status = ?", constant.SourceNorMal).Find(&sourceList).Error; err != nil {
 		return nil, err
 	}
 	return sourceList, nil

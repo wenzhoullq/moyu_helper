@@ -25,9 +25,30 @@ func NewSourceService() *SourceService {
 	}
 	return ss
 }
-
+func (ss *SourceService) checkUpdateSource(req *request.UpdateSourceRequest) error {
+	if req.SourceName == "" || req.SourceDesc == "" || req.SourceLink == "" || req.SourceType == 0 {
+		return errors.New("param error")
+	}
+	if req.SourceType == constant.CommissionSource && req.SourceExp == "" {
+		return errors.New("param error")
+	}
+	return nil
+}
 func (ss *SourceService) UpdateSource(c context.Context, req *request.UpdateSourceRequest) (*lib.Response, error) {
 	resp := lib.NewResponse()
+	if err := ss.checkUpdateSource(req); err != nil {
+		lib.SetResponse(resp, lib.SetErrMsg(err.Error()), lib.SetErrNo(constant.ParamErr))
+		return nil, err
+	}
+	//if err := ss.SourceDao.UpdateSource(); err != nil {
+	//	lib.SetResponse(resp, lib.SetErrMsg(err.Error()), lib.SetErrNo(constant.DBErr))
+	//	return resp, err
+	//}
+	//if err := common.InitTool(); err != nil {
+	//	lib.SetResponse(resp, lib.SetErrMsg(err.Error()), lib.SetErrNo(constant.ServerErr))
+	//	return resp, err
+	//}
+	ss.Logln(logrus.InfoLevel, "update Source success")
 	return resp, nil
 }
 func (ss *SourceService) checkCreateSource(req *request.CreateSourceRequest) error {

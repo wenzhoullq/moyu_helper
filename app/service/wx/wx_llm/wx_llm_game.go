@@ -32,33 +32,33 @@ func (service *WxLLMService) game(msg *openwechat.Message) (bool, error) {
 	return false, nil
 }
 
-func (service *WxLLMService) unDrawLots(msg *openwechat.Message) (bool, error) {
-	if msg.Content != constant.UnDrawLots {
-		return false, nil
-	}
-	user, err := msg.SenderInGroup()
-	if err != nil {
-		return true, err
-	}
-	group, err := msg.Sender()
-	if err != nil {
-		return true, err
-	}
-	key := service.redisKeyGroupDrawLotsMark(user, group)
-	_, err = service.wxDao.GetString(key)
-	if err != nil {
-		if err == redis.Nil {
-			service.replyTextChan <- &reply.Reply{
-				Message: msg,
-				Content: constant.UnHasDrawLots,
-			}
-			return true, nil
-		}
-		return true, err
-	}
-	service.unDrawLotsChan <- msg
-	return true, nil
-}
+//func (service *WxLLMService) unDrawLots(msg *openwechat.Message) (bool, error) {
+//	if msg.Content != constant.UnDrawLots {
+//		return false, nil
+//	}
+//	user, err := msg.SenderInGroup()
+//	if err != nil {
+//		return true, err
+//	}
+//	group, err := msg.Sender()
+//	if err != nil {
+//		return true, err
+//	}
+//	key := service.redisKeyGroupDrawLotsMark(user, group)
+//	_, err = service.wxDao.GetString(key)
+//	if err != nil {
+//		if err == redis.Nil {
+//			service.replyTextChan <- &reply.Reply{
+//				Message: msg,
+//				Content: constant.UnHasDrawLots,
+//			}
+//			return true, nil
+//		}
+//		return true, err
+//	}
+//	service.unDrawLotsChan <- msg
+//	return true, nil
+//}
 
 func (service *WxLLMService) drawLots(msg *openwechat.Message) (bool, error) {
 	if msg.Content != constant.DrawLots {
@@ -146,23 +146,24 @@ func (service *WxLLMService) upgrade(msg *openwechat.Message) (bool, error) {
 func (service *WxLLMService) redisKeyGroupDrawLotsMark(user *openwechat.User, group *openwechat.User) string {
 	return fmt.Sprintf(constant.GroupDrawLotsMark, group.UserName, user.UserName)
 }
-func (service *WxLLMService) unDrawLotsProcess(msg *openwechat.Message) error {
-	user, err := msg.SenderInGroup()
-	if err != nil {
-		return err
-	}
-	group, err := msg.Sender()
-	key := service.redisKeyGroupDrawLotsMark(user, group)
-	value, err := service.wxDao.GetString(key)
-	if err != nil {
-		return err
-	}
-	service.replyTextChan <- &reply.Reply{
-		Message: msg,
-		Content: fmt.Sprintf(constant.UnDrawLotsSuf, user.DisplayName, value),
-	}
-	return nil
-}
+
+//func (service *WxLLMService) unDrawLotsProcess(msg *openwechat.Message) error {
+//	user, err := msg.SenderInGroup()
+//	if err != nil {
+//		return err
+//	}
+//	group, err := msg.Sender()
+//	key := service.redisKeyGroupDrawLotsMark(user, group)
+//	value, err := service.wxDao.GetString(key)
+//	if err != nil {
+//		return err
+//	}
+//	service.replyTextChan <- &reply.Reply{
+//		Message: msg,
+//		Content: fmt.Sprintf(constant.UnDrawLotsSuf, user.DisplayName, value),
+//	}
+//	return nil
+//}
 
 func (service *WxLLMService) randomSend(path string, msg *openwechat.Message) (string, error) {
 	files, err := ioutil.ReadDir(path)
@@ -177,13 +178,13 @@ func (service *WxLLMService) randomSend(path string, msg *openwechat.Message) (s
 	randomIndex := rand.Intn(len(files))
 	randomFile := files[randomIndex]
 	fileName := randomFile.Name()
-	// 输出随机选择的文件名
+	// 输出图片至图片管道
 	service.replyImgChan <- &reply.ImgReply{
 		Message: msg,
 		Path:    path + fileName,
 	}
-	texts := strings.Split(fileName, ".jpg")
-	return texts[0], nil
+
+	return strings.Split(fileName, ".jpg")[0], nil
 }
 
 func (service *WxLLMService) zodiacBlindBoxProcess(msg *openwechat.Message) error {
@@ -201,14 +202,14 @@ func (service *WxLLMService) zodiacBlindBoxProcess(msg *openwechat.Message) erro
 	}
 	//记录抽生肖盲盒
 	key := service.redisKeyGroupZodiacBlindBox(user, group)
-	err = service.wxDao.SetString(key, text, lib.SecondsUntilMidnight())
+	err = service.wxDao.SetString(key, "", lib.SecondsUntilMidnight())
 	if err != nil {
 		return err
 	}
-	//发送抽中的盲盒信息
+	//输出文本至文本管道
 	service.replyTextChan <- &reply.Reply{
 		Message: msg,
-		Content: fmt.Sprintf(constant.ZodiacBlindBoxSuf, text),
+		Content: fmt.Sprintf(constant.ZodiacBlindBoxSuf, user.DisplayName, text),
 	}
 	return nil
 }
@@ -219,7 +220,7 @@ func (service *WxLLMService) drawLotsProcess(msg *openwechat.Message) error {
 	if err != nil {
 		return err
 	}
-	//记录抽签
+	//抽签redis
 	user, err := msg.SenderInGroup()
 	if err != nil {
 		return err
@@ -229,9 +230,14 @@ func (service *WxLLMService) drawLotsProcess(msg *openwechat.Message) error {
 		return err
 	}
 	key := service.redisKeyGroupDrawLotsMark(user, group)
-	err = service.wxDao.SetString(key, text, lib.SecondsUntilMidnight())
+	err = service.wxDao.SetString(key, "", lib.SecondsUntilMidnight())
 	if err != nil {
 		return err
+	}
+	//输出文本至文本管道
+	service.replyTextChan <- &reply.Reply{
+		Message: msg,
+		Content: fmt.Sprintf(constant.DrawLotsSuf, user.DisplayName, text),
 	}
 	return nil
 }

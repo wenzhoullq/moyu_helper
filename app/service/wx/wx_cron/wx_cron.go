@@ -93,9 +93,10 @@ func (service *WxCronService) isWorkDay() bool {
 	}
 	// 周六周末
 	if weekday == time.Saturday || weekday == time.Sunday {
-		if len(common.Holidays) > 0 && today == common.Holidays[0].Date && common.Holidays[0].IsOffDay {
-			return false
+		if len(common.Holidays) > 0 && today == common.Holidays[0].Date && !common.Holidays[0].IsOffDay {
+			return true
 		}
+		return false
 	}
 	return true
 }

@@ -3,11 +3,13 @@ package wx_llm
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/eatmoreapple/openwechat"
 	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
 	"weixin_LLM/dto/chat"
 	"weixin_LLM/dto/reply"
+	"weixin_LLM/init/config"
 	"weixin_LLM/lib"
 	"weixin_LLM/lib/constant"
 )
@@ -75,13 +77,21 @@ func (service *WxLLMService) Forbid(content, modeType, key string, msg *openwech
 	return false, nil
 }
 
+func (service *WxLLMService) AbilityIntroduce(msg *openwechat.Message) {
+	content := constant.AbilitiesIntroduce
+	for i, v := range config.Config.AbilityConfigure.Abilities {
+		content = fmt.Sprintf("%s%d:%s\n", content, i+1, v)
+	}
+	service.replyTextChan <- &reply.Reply{
+		Message: msg,
+		Content: content,
+	}
+}
+
 func (service *WxLLMService) friendChat(msg *openwechat.Message) (bool, error) {
 	user, err := msg.Sender()
 	if msg.Content == "" {
-		service.replyTextChan <- &reply.Reply{
-			Message: msg,
-			Content: constant.EmptyReply,
-		}
+		service.AbilityIntroduce(msg)
 		return true, nil
 	}
 	if err != nil {
@@ -98,10 +108,7 @@ func (service *WxLLMService) friendChat(msg *openwechat.Message) (bool, error) {
 func (service *WxLLMService) groupChat(msg *openwechat.Message) (bool, error) {
 	user, err := msg.SenderInGroup()
 	if msg.Content == "" {
-		service.replyTextChan <- &reply.Reply{
-			Message: msg,
-			Content: constant.EmptyReply,
-		}
+		service.AbilityIntroduce(msg)
 		return true, nil
 	}
 	if err != nil {

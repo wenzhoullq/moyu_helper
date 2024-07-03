@@ -275,19 +275,21 @@ func (service *WxService) getGroupUserNameToUserIDMap() (map[string]map[string]s
 	//群 群员
 	usersMap := make(map[string]map[string]string)
 	for _, g := range service.groups {
-		if g.NickName == "" {
+		nickName := strings.TrimSpace(g.NickName)
+		if nickName == "" {
 			continue
 		}
-		usersMap[g.NickName] = make(map[string]string)
+		usersMap[nickName] = make(map[string]string)
 		member, err := g.Members()
 		if err != nil {
 			return nil, err
 		}
 		for _, u := range member {
-			if u.DisplayName == "" {
+			disPlayName := strings.TrimSpace(u.DisplayName)
+			if disPlayName == "" {
 				continue
 			}
-			usersMap[g.NickName][u.DisplayName] = u.UserName
+			usersMap[nickName][disPlayName] = u.UserName
 		}
 	}
 	return usersMap, nil

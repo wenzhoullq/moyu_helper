@@ -14,6 +14,11 @@ type Configuration struct {
 	EleConfigure      `toml:"ele_configure"`
 	MeiTuanConfigure  `toml:"meituan_configure"`
 	DiDiConfigure     `toml:"didi_configure"`
+	AbilityConfigure  `toml:"ability_configure"`
+}
+
+type AbilityConfigure struct {
+	Abilities []string `toml:"abilities"`
 }
 
 type EleConfigure struct {

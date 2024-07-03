@@ -59,3 +59,6 @@ access_key = "o459DU6ZaZMFcifNVJBdEAAQ63TiQc9x"
 [ele_configure]
 app_key = "34685610"
 secret = "44448f5e7bc3dbc595ded3d528337b07"
+
+[ability_configure]
+abilities = ["抽签", "外卖红包", "打车", "茅台"]
