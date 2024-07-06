@@ -42,3 +42,10 @@ func (sd *SourceDao) UpdateSource(source *source.Source) error {
 	}
 	return nil
 }
+func (sd *SourceDao) GetSourceByName(sourceName string) (*source.Source, error) {
+	source := &source.Source{}
+	if err := sd.Table(source.TableName()).Where("source_name = ? ", sourceName).Find(&source).Error; err != nil {
+		return nil, err
+	}
+	return source, nil
+}

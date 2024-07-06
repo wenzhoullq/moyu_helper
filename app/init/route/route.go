@@ -2,6 +2,7 @@ package route
 
 import (
 	"github.com/gin-gonic/gin"
+	config2 "weixin_LLM/api/config"
 	source2 "weixin_LLM/api/source"
 )
 
@@ -10,12 +11,17 @@ func RouteInit() *gin.Engine {
 	r.Use()
 	imaotai := r.Group("moyuHelper")
 	{
-		logIn := imaotai.Group("source")
+		source := imaotai.Group("source")
 		{
-			logIn.POST("/updateSource", source2.UpdateSource)
-			logIn.GET("/getSource", source2.GetSource)
-			logIn.POST("/createSource", source2.CreateSource)
+			source.POST("/updateSource", source2.UpdateSource)
+			source.GET("/getSource", source2.GetSource)
+			source.POST("/createSource", source2.CreateSource)
 		}
+		config := imaotai.Group("config")
+		{
+			config.GET("/loadConfig", config2.LoadConfig)
+		}
+
 	}
 	return r
 }

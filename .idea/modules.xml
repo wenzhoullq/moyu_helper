@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/weixin_LLM.iml" filepath="$PROJECT_DIR$/.idea/weixin_LLM.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/moyu_helper.iml" filepath="$PROJECT_DIR$/.idea/moyu_helper.iml" />
     </modules>
   </component>
 </project>

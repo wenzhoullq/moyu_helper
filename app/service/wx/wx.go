@@ -191,12 +191,6 @@ func (ws *WxService) InitWxRobot() error {
 		wx_llm.SetLog(ws.Logger), wx_llm.SetWxDao(ws.wxDao))
 	//注册消息处理函数
 	ws.MessageHandler = func(msg *openwechat.Message) {
-		user, err := msg.Sender()
-		if err != nil {
-			ws.Logln(logrus.ErrorLevel, err.Error())
-			return
-		}
-		ws.Logln(logrus.InfoLevel, "user:", user.NickName, " msgContent:", msg.Content)
 		//对于不同的消息进行不同的处理
 		ok, err := ws.friendSender(msg)
 		if err != nil {

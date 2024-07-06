@@ -3,6 +3,7 @@ package source
 import (
 	"context"
 	"errors"
+	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 	"weixin_LLM/dao"
 	"weixin_LLM/dto/request"
@@ -26,7 +27,7 @@ func NewSourceService() *SourceService {
 	return ss
 }
 func (ss *SourceService) checkUpdateSource(req *request.UpdateSourceRequest) error {
-	if req.SourceName == "" || req.SourceDesc == "" || req.SourceLink == "" || req.SourceType == 0 {
+	if req.SourceName == "" {
 		return errors.New("param error")
 	}
 	if req.SourceType == constant.CommissionSource && req.SourceExp == "" {
@@ -40,14 +41,35 @@ func (ss *SourceService) UpdateSource(c context.Context, req *request.UpdateSour
 		lib.SetResponse(resp, lib.SetErrMsg(err.Error()), lib.SetErrNo(constant.ParamErr))
 		return nil, err
 	}
-	//if err := ss.SourceDao.UpdateSource(); err != nil {
-	//	lib.SetResponse(resp, lib.SetErrMsg(err.Error()), lib.SetErrNo(constant.DBErr))
-	//	return resp, err
-	//}
-	//if err := common.InitTool(); err != nil {
-	//	lib.SetResponse(resp, lib.SetErrMsg(err.Error()), lib.SetErrNo(constant.ServerErr))
-	//	return resp, err
-	//}
+	source, err := ss.SourceDao.GetSourceByName(req.SourceName)
+	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			lib.SetResponse(resp, lib.SetErrMsg("source not exist"), lib.SetErrNo(constant.DBErr))
+			return resp, err
+		}
+		lib.SetResponse(resp, lib.SetErrMsg(err.Error()), lib.SetErrNo(constant.DBErr))
+		return resp, err
+	}
+	if len(req.SourceExp) > 0 {
+		source.SourceExp = req.SourceExp
+	}
+	if len(req.SourceDesc) > 0 {
+		source.SourceDesc = req.SourceDesc
+	}
+	if len(req.SourceLink) > 0 {
+		source.SourceLink = req.SourceLink
+	}
+	if req.SourceType != 0 {
+		source.SourceType = req.SourceType
+	}
+	if err := ss.SourceDao.UpdateSource(source); err != nil {
+		lib.SetResponse(resp, lib.SetErrMsg(err.Error()), lib.SetErrNo(constant.DBErr))
+		return resp, err
+	}
+	if err := common.InitTool(); err != nil {
+		lib.SetResponse(resp, lib.SetErrMsg(err.Error()), lib.SetErrNo(constant.ServerErr))
+		return resp, err
+	}
 	ss.Logln(logrus.InfoLevel, "update Source success")
 	return resp, nil
 }

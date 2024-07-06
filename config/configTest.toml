@@ -61,4 +61,4 @@ app_key = "34685610"
 secret = "44448f5e7bc3dbc595ded3d528337b07"
 
 [ability_configure]
-abilities = ["抽签", "外卖红包", "打车", "茅台"]
+abilities = ["抽签", "外卖红包", "打车","打车通勤套餐", "抽茅台"]

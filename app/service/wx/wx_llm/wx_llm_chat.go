@@ -88,6 +88,10 @@ func (service *WxLLMService) AbilityIntroduce(msg *openwechat.Message) {
 	}
 }
 
+func (service *WxLLMService) redisKeyFriendDrawLotsMark(user *openwechat.User) string {
+	return fmt.Sprintf(constant.FriendDrawLotsMark, user.UserName)
+}
+
 func (service *WxLLMService) friendChat(msg *openwechat.Message) (bool, error) {
 	user, err := msg.Sender()
 	if msg.Content == "" {
