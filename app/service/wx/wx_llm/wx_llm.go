@@ -71,9 +71,11 @@ func NewWxLLMService(ops ...func(c *WxLLMService)) *WxLLMService {
 		updateChan:          make(chan struct{}, constant.UpdateMaxNum),
 		//signLock:            &sync.Mutex{},
 	}
-	service.friendTextProducer = []func(*openwechat.Message) (bool, error){service.tools, service.friendImgToImgMark, service.friendTextToImg, service.friendDrawLots, service.friendChat}
+	//service.friendTextProducer = []func(*openwechat.Message) (bool, error){service.tools, service.friendImgToImgMark, service.friendTextToImg, service.friendDrawLots,service.friendAbilities, service.friendChat}
+	service.friendTextProducer = []func(*openwechat.Message) (bool, error){service.tools, service.friendImgToImgMark, service.friendTextToImg, service.friendDrawLots, service.friendAbilities}
 	service.friendImgProducer = []func(*openwechat.Message) (bool, error){service.friendImgToImg}
-	service.groupTextProducer = []func(*openwechat.Message) (bool, error){service.game, service.tools, service.groupMark, service.groupTextToImg, service.groupChat}
+	//service.groupTextProducer = []func(*openwechat.Message) (bool, error){service.game, service.tools, service.groupMark, service.groupTextToImg, service.groupChat}
+	service.groupTextProducer = []func(*openwechat.Message) (bool, error){service.game, service.tools, service.groupMark, service.groupTextToImg, service.GroupAbilities}
 	service.groupImgProducer = []func(*openwechat.Message) (bool, error){service.groupImgToImg}
 	service.groupGameProducer = []func(message *openwechat.Message) (bool, error){service.sign, service.upgrade, service.groupDrawLots, service.zodiacBlindBox}
 	//service.groupGameProducer = []func(message *openwechat.Message) (bool, error){service.sign, service.upgrade, service.drawLots, service.unDrawLots, service.zodiacBlindBox}

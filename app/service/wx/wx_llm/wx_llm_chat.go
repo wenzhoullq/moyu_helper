@@ -7,6 +7,7 @@ import (
 	"github.com/eatmoreapple/openwechat"
 	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
+	"strings"
 	"weixin_LLM/dto/chat"
 	"weixin_LLM/dto/reply"
 	"weixin_LLM/init/config"
@@ -92,12 +93,38 @@ func (service *WxLLMService) redisKeyFriendDrawLotsMark(user *openwechat.User) s
 	return fmt.Sprintf(constant.FriendDrawLotsMark, user.UserName)
 }
 
+func (service *WxLLMService) friendAbilities(msg *openwechat.Message) (bool, error) {
+	if msg.Content == "" && !strings.Contains(msg.Content, "菜单") && !strings.Contains(msg.Content, "功能") {
+		return false, nil
+	}
+	service.AbilityIntroduce(msg)
+	user, err := msg.Sender()
+	if err != nil {
+		return true, err
+	}
+	service.Logln(logrus.InfoLevel, user.NickName, "Abilities")
+	return true, nil
+}
+
+func (service *WxLLMService) GroupAbilities(msg *openwechat.Message) (bool, error) {
+	if msg.Content == "" && !strings.Contains(msg.Content, "菜单") && !strings.Contains(msg.Content, "功能") {
+		return false, nil
+	}
+	service.AbilityIntroduce(msg)
+	user, err := msg.SenderInGroup()
+	if err != nil {
+		return true, err
+	}
+	group, err := msg.Sender()
+	if err != nil {
+		return true, err
+	}
+	service.Logln(logrus.InfoLevel, group.UserName, user.NickName, "Abilities")
+	return true, nil
+}
+
 func (service *WxLLMService) friendChat(msg *openwechat.Message) (bool, error) {
 	user, err := msg.Sender()
-	if msg.Content == "" {
-		service.AbilityIntroduce(msg)
-		return true, nil
-	}
 	if err != nil {
 		return true, err
 	}
@@ -111,10 +138,6 @@ func (service *WxLLMService) friendChat(msg *openwechat.Message) (bool, error) {
 
 func (service *WxLLMService) groupChat(msg *openwechat.Message) (bool, error) {
 	user, err := msg.SenderInGroup()
-	if msg.Content == "" {
-		service.AbilityIntroduce(msg)
-		return true, nil
-	}
 	if err != nil {
 		return true, err
 	}
