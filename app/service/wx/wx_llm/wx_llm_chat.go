@@ -94,7 +94,7 @@ func (service *WxLLMService) redisKeyFriendDrawLotsMark(user *openwechat.User) s
 }
 
 func (service *WxLLMService) friendAbilities(msg *openwechat.Message) (bool, error) {
-	if msg.Content == "" && !strings.Contains(msg.Content, "菜单") && !strings.Contains(msg.Content, "功能") {
+	if msg.Content != "" && !strings.Contains(msg.Content, "菜单") && !strings.Contains(msg.Content, "功能") {
 		return false, nil
 	}
 	service.AbilityIntroduce(msg)
@@ -107,7 +107,7 @@ func (service *WxLLMService) friendAbilities(msg *openwechat.Message) (bool, err
 }
 
 func (service *WxLLMService) GroupAbilities(msg *openwechat.Message) (bool, error) {
-	if msg.Content == "" && !strings.Contains(msg.Content, "菜单") && !strings.Contains(msg.Content, "功能") {
+	if msg.Content != "" && !strings.Contains(msg.Content, "菜单") && !strings.Contains(msg.Content, "功能") {
 		return false, nil
 	}
 	service.AbilityIntroduce(msg)
