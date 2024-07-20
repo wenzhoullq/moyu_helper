@@ -103,6 +103,7 @@ func (service *WxLLMService) SubscribeNews(msg *openwechat.Message) error {
 		}
 		subscribeContent := &group2.Subscribe{
 			News: true,
+			Tips: true,
 		}
 		subscribe, err := json.Marshal(subscribeContent)
 		if err != nil {
@@ -116,22 +117,23 @@ func (service *WxLLMService) SubscribeNews(msg *openwechat.Message) error {
 		if err != nil {
 			return err
 		}
-	}
-	subscribeContent := &group2.Subscribe{}
-	err = json.Unmarshal([]byte(g.Subscribe), subscribeContent)
-	if err != nil {
-		return err
-	}
-	subscribeContent.News = true
-	subscribe, err := json.Marshal(subscribeContent)
-	g.Subscribe = string(subscribe)
-	err = service.wxDao.UpdateGroup(g)
-	if err != nil {
-		return err
-	}
-	service.replyTextChan <- &reply.Reply{
-		Message: msg,
-		Content: constant.SubscribeNewsSuccess,
+	} else {
+		subscribeContent := &group2.Subscribe{}
+		err = json.Unmarshal([]byte(g.Subscribe), subscribeContent)
+		if err != nil {
+			return err
+		}
+		subscribeContent.News = true
+		subscribe, err := json.Marshal(subscribeContent)
+		g.Subscribe = string(subscribe)
+		err = service.wxDao.UpdateGroup(g)
+		if err != nil {
+			return err
+		}
+		service.replyTextChan <- &reply.Reply{
+			Message: msg,
+			Content: constant.SubscribeNewsSuccess,
+		}
 	}
 	return nil
 }
@@ -146,6 +148,7 @@ func (service *WxLLMService) UnSubscribeNews(msg *openwechat.Message) error {
 			return err
 		}
 		subscribeContent := &group2.Subscribe{
+			Tips: true,
 			News: false,
 		}
 		subscribe, err := json.Marshal(subscribeContent)
@@ -160,18 +163,19 @@ func (service *WxLLMService) UnSubscribeNews(msg *openwechat.Message) error {
 		if err != nil {
 			return err
 		}
-	}
-	subscribeContent := &group2.Subscribe{}
-	err = json.Unmarshal([]byte(g.Subscribe), subscribeContent)
-	if err != nil {
-		return err
-	}
-	subscribeContent.News = false
-	subscribe, err := json.Marshal(subscribeContent)
-	g.Subscribe = string(subscribe)
-	err = service.wxDao.UpdateGroup(g)
-	if err != nil {
-		return err
+	} else {
+		subscribeContent := &group2.Subscribe{}
+		err = json.Unmarshal([]byte(g.Subscribe), subscribeContent)
+		if err != nil {
+			return err
+		}
+		subscribeContent.News = false
+		subscribe, err := json.Marshal(subscribeContent)
+		g.Subscribe = string(subscribe)
+		err = service.wxDao.UpdateGroup(g)
+		if err != nil {
+			return err
+		}
 	}
 	service.replyTextChan <- &reply.Reply{
 		Message: msg,
@@ -191,6 +195,7 @@ func (service *WxLLMService) SubscribeTips(msg *openwechat.Message) error {
 		}
 		subscribeContent := &group2.Subscribe{
 			Tips: true,
+			News: true,
 		}
 		subscribe, err := json.Marshal(subscribeContent)
 		if err != nil {
@@ -204,18 +209,19 @@ func (service *WxLLMService) SubscribeTips(msg *openwechat.Message) error {
 		if err != nil {
 			return err
 		}
-	}
-	subscribeContent := &group2.Subscribe{}
-	err = json.Unmarshal([]byte(g.Subscribe), subscribeContent)
-	if err != nil {
-		return err
-	}
-	subscribeContent.Tips = true
-	subscribe, err := json.Marshal(subscribeContent)
-	g.Subscribe = string(subscribe)
-	err = service.wxDao.UpdateGroup(g)
-	if err != nil {
-		return err
+	} else {
+		subscribeContent := &group2.Subscribe{}
+		err = json.Unmarshal([]byte(g.Subscribe), subscribeContent)
+		if err != nil {
+			return err
+		}
+		subscribeContent.Tips = true
+		subscribeStr, err := json.Marshal(subscribeContent)
+		g.Subscribe = string(subscribeStr)
+		err = service.wxDao.UpdateGroup(g)
+		if err != nil {
+			return err
+		}
 	}
 	service.replyTextChan <- &reply.Reply{
 		Message: msg,
@@ -234,6 +240,7 @@ func (service *WxLLMService) UnSubscribeTips(msg *openwechat.Message) error {
 			return err
 		}
 		subscribeContent := &group2.Subscribe{
+			News: true,
 			Tips: false,
 		}
 		subscribe, err := json.Marshal(subscribeContent)
