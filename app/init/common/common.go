@@ -98,13 +98,13 @@ func InitKeyMap() error {
 
 func InitAd() error {
 	AdMap = map[time.Weekday]string{
-		time.Sunday:    constant.WeekendAd,
-		time.Monday:    constant.DailyAd,
-		time.Tuesday:   constant.DailyAd,
-		time.Wednesday: constant.WednesdayAd,
-		time.Thursday:  constant.DailyAd,
-		time.Friday:    constant.WeekendAd,
-		time.Saturday:  constant.WeekendAd,
+		time.Sunday:    constant.Ad,
+		time.Monday:    constant.Ad,
+		time.Tuesday:   constant.Ad,
+		time.Wednesday: constant.Ad,
+		time.Thursday:  constant.Ad,
+		time.Friday:    constant.Ad,
+		time.Saturday:  constant.Ad,
 	}
 	return nil
 }

@@ -1,12 +1,15 @@
 package wx_cron
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/eatmoreapple/openwechat"
+	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 	"strconv"
 	"time"
 	"weixin_LLM/dao"
+	"weixin_LLM/dto/group"
 	holiday2 "weixin_LLM/dto/holiday"
 	"weixin_LLM/init/common"
 	"weixin_LLM/init/config"
@@ -112,6 +115,8 @@ func (service *WxCronService) SendHolidayTips() {
 	if !service.isWorkDay() {
 		return
 	}
+	//查看是否订阅HolidayTips
+
 	//下一个休息日数组
 	nextRestDays := make([]*holiday2.Day, 0)
 	// 获得最近的一个周六
@@ -155,8 +160,31 @@ func (service *WxCronService) SendHolidayTips() {
 		service.Log(logrus.ErrorLevel, err.Error())
 		return
 	}
+	groups, err := service.wxDao.GetGroupList()
+	if err != nil {
+		service.Log(logrus.ErrorLevel, err)
+		return
+	}
+	groupMap := make(map[string]*group.Groups)
+	for _, v := range groups {
+		scribe := &group.Subscribe{}
+		err = json.Unmarshal([]byte(v.Subscribe), scribe)
+		if err != nil {
+			service.Log(logrus.ErrorLevel, err)
+			continue
+		}
+		if !scribe.Tips {
+			continue
+		}
+		groupMap[v.GroupName] = v
+	}
 	for _, group := range service.groups {
-		_, err := group.SendText(holidayTip)
+		//?到底是什么name
+		if _, ok := groupMap[group.UserName]; !ok {
+			//dd
+			continue
+		}
+		_, err = group.SendText(holidayTip)
 		if err != nil {
 			service.Log(logrus.ErrorLevel, err.Error())
 			return
@@ -192,9 +220,30 @@ func (service *WxCronService) SendNews() {
 		service.Log(logrus.ErrorLevel, err.Error())
 		return
 	}
-
+	groups, err := service.wxDao.GetGroupList()
+	if err != nil {
+		service.Log(logrus.ErrorLevel, err)
+		return
+	}
+	groupMap := make(map[string]*group.Groups)
+	for _, v := range groups {
+		scribe := &group.Subscribe{}
+		err = json.Unmarshal([]byte(v.Subscribe), scribe)
+		if err != nil {
+			service.Log(logrus.ErrorLevel, err)
+			continue
+		}
+		if !scribe.News {
+			continue
+		}
+		groupMap[v.GroupName] = v
+	}
 	for _, group := range service.groups {
-		_, err := group.SendText(news)
+		//NickName:群昵称
+		if _, ok := groupMap[group.NickName]; !ok {
+			continue
+		}
+		_, err = group.SendText(news)
 		if err != nil {
 			service.Log(logrus.ErrorLevel, err.Error())
 			return
@@ -204,14 +253,53 @@ func (service *WxCronService) SendNews() {
 }
 
 func (service *WxCronService) RegularUpdate() {
-	err := service.RegularUpdateUserName()
+	//err := service.RegularUpdateUserName()
+	//if err != nil {
+	//	service.Logln(logrus.ErrorLevel, err.Error())
+	//}
+	err := service.RegularSource()
 	if err != nil {
 		service.Logln(logrus.ErrorLevel, err.Error())
 	}
-	err = service.RegularSource()
+	err = service.RegularUpdateGroup()
 	if err != nil {
 		service.Logln(logrus.ErrorLevel, err.Error())
 	}
+
+}
+
+// 更新订阅情况
+func (service *WxCronService) RegularUpdateGroup() error {
+	groups, err := service.self.Groups()
+	if err != nil {
+		return err
+	}
+	service.groups = groups
+	for _, v := range groups {
+		_, err = service.wxDao.GetGroupByName(v.NickName)
+		if gorm.IsRecordNotFoundError(err) {
+			//不存在则新增
+			scribe := &group.Subscribe{
+				News: true,
+				Tips: true,
+			}
+			scribeStr, err := json.Marshal(&scribe)
+			if err != nil {
+				return err
+			}
+			group := &group.Groups{
+				GroupName:  v.NickName,
+				Subscribe:  string(scribeStr),
+				CreateTime: time.Now(),
+			}
+			err = service.wxDao.CreateGroup(group)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (service *WxCronService) RegularSource() error {

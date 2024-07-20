@@ -49,6 +49,8 @@ type WxLLMService struct {
 	groups         openwechat.Groups
 	friends        openwechat.Friends
 	//signLock       *sync.Mutex
+	SubscribeNewsMap map[string]func(*openwechat.Message) error
+	SubscribeTipsMap map[string]func(*openwechat.Message) error
 }
 
 func NewWxLLMService(ops ...func(c *WxLLMService)) *WxLLMService {
@@ -75,7 +77,7 @@ func NewWxLLMService(ops ...func(c *WxLLMService)) *WxLLMService {
 	service.friendTextProducer = []func(*openwechat.Message) (bool, error){service.tools, service.friendImgToImgMark, service.friendTextToImg, service.friendDrawLots, service.friendAbilities}
 	service.friendImgProducer = []func(*openwechat.Message) (bool, error){service.friendImgToImg}
 	//service.groupTextProducer = []func(*openwechat.Message) (bool, error){service.game, service.tools, service.groupMark, service.groupTextToImg, service.groupChat}
-	service.groupTextProducer = []func(*openwechat.Message) (bool, error){service.game, service.tools, service.groupMark, service.groupTextToImg, service.GroupAbilities}
+	service.groupTextProducer = []func(*openwechat.Message) (bool, error){service.game, service.tools, service.groupMark, service.groupTextToImg, service.groupSubscribeNews, service.groupSubscribeTips, service.GroupAbilities}
 	service.groupImgProducer = []func(*openwechat.Message) (bool, error){service.groupImgToImg}
 	service.groupGameProducer = []func(message *openwechat.Message) (bool, error){service.sign, service.upgrade, service.groupDrawLots, service.zodiacBlindBox}
 	//service.groupGameProducer = []func(message *openwechat.Message) (bool, error){service.sign, service.upgrade, service.drawLots, service.unDrawLots, service.zodiacBlindBox}
@@ -93,6 +95,14 @@ func NewWxLLMService(ops ...func(c *WxLLMService)) *WxLLMService {
 		constant.SignFirst:  config.Config.SignRewardFirst,
 		constant.SignSecond: config.Config.SignRewardSecond,
 		constant.SignThird:  config.Config.SignRewardThird,
+	}
+	service.SubscribeNewsMap = map[string]func(*openwechat.Message) error{
+		constant.SubscribeNews:   service.SubscribeNews,
+		constant.UnSubscribeNews: service.UnSubscribeNews,
+	}
+	service.SubscribeTipsMap = map[string]func(*openwechat.Message) error{
+		constant.SubscribeTips:   service.SubscribeTips,
+		constant.UnSubscribeTips: service.UnSubscribeTips,
 	}
 	for _, op := range ops {
 		op(service)

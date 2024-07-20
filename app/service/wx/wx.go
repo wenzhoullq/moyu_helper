@@ -1,12 +1,15 @@
 package wx
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/eatmoreapple/openwechat"
+	"github.com/jinzhu/gorm"
 	"github.com/robfig/cron"
 	"github.com/sirupsen/logrus"
 	"strings"
 	"weixin_LLM/dao"
+	group2 "weixin_LLM/dto/group"
 	"weixin_LLM/init/config"
 	"weixin_LLM/init/log"
 	"weixin_LLM/lib"
@@ -157,6 +160,33 @@ func (ws *WxService) friendImgMsg(msg *openwechat.Message) (bool, error) {
 	}
 	return true, errors.New("no such user img request")
 }
+
+func (ws *WxService) InitGroupScribe() error {
+	for _, v := range ws.groups {
+		//如果没有该组,则添加订阅
+		if _, err := ws.wxDao.GetGroupByName(v.NickName); err != nil {
+			if gorm.IsRecordNotFoundError(err) {
+				scribe := &group2.Subscribe{
+					News: true,
+					Tips: true,
+				}
+				scribeStr, err := json.Marshal(&scribe)
+				if err != nil {
+					return err
+				}
+				group := group2.Groups{
+					GroupName: v.NickName,
+					Subscribe: string(scribeStr),
+				}
+				if err = ws.wxDao.CreateGroup(&group); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
 func (ws *WxService) InitWxRobot() error {
 	// 注册登陆二维码回调
 	ws.UUIDCallback = openwechat.PrintlnQrcodeUrl
@@ -184,7 +214,11 @@ func (ws *WxService) InitWxRobot() error {
 
 	ws.groups = groups
 	ws.Logln(logrus.InfoLevel, groups)
-
+	// 初始化group订阅
+	if err = ws.InitGroupScribe(); err != nil {
+		ws.Logln(logrus.ErrorLevel, err.Error())
+		return err
+	}
 	ws.friends = friends
 	//初始化WxLLM
 	ws.WxLLMService = wx_llm.NewWxLLMService(wx_llm.SetSelf(self), wx_llm.SetGroups(groups), wx_llm.SetFriends(friends),
@@ -233,10 +267,10 @@ func (ws *WxService) InitWxRobot() error {
 	if err != nil {
 		return err
 	}
-	err = c.AddFunc(config.Config.RegularUpdate, ws.RegularUpdate)
-	if err != nil {
-		return err
-	}
+	//err = c.AddFunc(config.Config.RegularUpdate, ws.RegularUpdate)
+	//if err != nil {
+	//	return err
+	//}
 	err = c.AddFunc(config.Config.RegularSendDailyProfit, ws.RegularSendDailyProfit)
 	c.Start()
 	return nil

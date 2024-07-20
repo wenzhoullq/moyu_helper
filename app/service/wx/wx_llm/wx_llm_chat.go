@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"github.com/eatmoreapple/openwechat"
 	"github.com/go-redis/redis/v8"
+	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 	"strings"
 	"weixin_LLM/dto/chat"
+	group2 "weixin_LLM/dto/group"
 	"weixin_LLM/dto/reply"
 	"weixin_LLM/init/config"
 	"weixin_LLM/lib"
@@ -87,6 +89,206 @@ func (service *WxLLMService) AbilityIntroduce(msg *openwechat.Message) {
 		Message: msg,
 		Content: content,
 	}
+}
+
+func (service *WxLLMService) SubscribeNews(msg *openwechat.Message) error {
+	group, err := msg.Sender()
+	if err != nil {
+		return err
+	}
+	g, err := service.wxDao.GetGroupByName(group.NickName)
+	if err != nil {
+		if !gorm.IsRecordNotFoundError(err) {
+			return err
+		}
+		subscribeContent := &group2.Subscribe{
+			News: true,
+		}
+		subscribe, err := json.Marshal(subscribeContent)
+		if err != nil {
+			return err
+		}
+		g = &group2.Groups{
+			GroupName: group.UserName,
+			Subscribe: string(subscribe),
+		}
+		err = service.wxDao.CreateGroup(g)
+		if err != nil {
+			return err
+		}
+	}
+	subscribeContent := &group2.Subscribe{}
+	err = json.Unmarshal([]byte(g.Subscribe), subscribeContent)
+	if err != nil {
+		return err
+	}
+	subscribeContent.News = true
+	subscribe, err := json.Marshal(subscribeContent)
+	g.Subscribe = string(subscribe)
+	err = service.wxDao.UpdateGroup(g)
+	if err != nil {
+		return err
+	}
+	service.replyTextChan <- &reply.Reply{
+		Message: msg,
+		Content: constant.SubscribeNewsSuccess,
+	}
+	return nil
+}
+func (service *WxLLMService) UnSubscribeNews(msg *openwechat.Message) error {
+	group, err := msg.Sender()
+	if err != nil {
+		return err
+	}
+	g, err := service.wxDao.GetGroupByName(group.NickName)
+	if err != nil {
+		if !gorm.IsRecordNotFoundError(err) {
+			return err
+		}
+		subscribeContent := &group2.Subscribe{
+			News: false,
+		}
+		subscribe, err := json.Marshal(subscribeContent)
+		if err != nil {
+			return err
+		}
+		g = &group2.Groups{
+			GroupName: group.UserName,
+			Subscribe: string(subscribe),
+		}
+		err = service.wxDao.CreateGroup(g)
+		if err != nil {
+			return err
+		}
+	}
+	subscribeContent := &group2.Subscribe{}
+	err = json.Unmarshal([]byte(g.Subscribe), subscribeContent)
+	if err != nil {
+		return err
+	}
+	subscribeContent.News = false
+	subscribe, err := json.Marshal(subscribeContent)
+	g.Subscribe = string(subscribe)
+	err = service.wxDao.UpdateGroup(g)
+	if err != nil {
+		return err
+	}
+	service.replyTextChan <- &reply.Reply{
+		Message: msg,
+		Content: constant.UnSubscribeNewsSuccess,
+	}
+	return nil
+}
+func (service *WxLLMService) SubscribeTips(msg *openwechat.Message) error {
+	group, err := msg.Sender()
+	if err != nil {
+		return err
+	}
+	g, err := service.wxDao.GetGroupByName(group.NickName)
+	if err != nil {
+		if !gorm.IsRecordNotFoundError(err) {
+			return err
+		}
+		subscribeContent := &group2.Subscribe{
+			Tips: true,
+		}
+		subscribe, err := json.Marshal(subscribeContent)
+		if err != nil {
+			return err
+		}
+		g = &group2.Groups{
+			GroupName: group.UserName,
+			Subscribe: string(subscribe),
+		}
+		err = service.wxDao.CreateGroup(g)
+		if err != nil {
+			return err
+		}
+	}
+	subscribeContent := &group2.Subscribe{}
+	err = json.Unmarshal([]byte(g.Subscribe), subscribeContent)
+	if err != nil {
+		return err
+	}
+	subscribeContent.Tips = true
+	subscribe, err := json.Marshal(subscribeContent)
+	g.Subscribe = string(subscribe)
+	err = service.wxDao.UpdateGroup(g)
+	if err != nil {
+		return err
+	}
+	service.replyTextChan <- &reply.Reply{
+		Message: msg,
+		Content: constant.SubscribeMoyuTipsSuccess,
+	}
+	return nil
+}
+func (service *WxLLMService) UnSubscribeTips(msg *openwechat.Message) error {
+	group, err := msg.Sender()
+	if err != nil {
+		return err
+	}
+	g, err := service.wxDao.GetGroupByName(group.NickName)
+	if err != nil {
+		if !gorm.IsRecordNotFoundError(err) {
+			return err
+		}
+		subscribeContent := &group2.Subscribe{
+			Tips: false,
+		}
+		subscribe, err := json.Marshal(subscribeContent)
+		if err != nil {
+			return err
+		}
+		g = &group2.Groups{
+			GroupName: group.UserName,
+			Subscribe: string(subscribe),
+		}
+		err = service.wxDao.CreateGroup(g)
+		if err != nil {
+			return err
+		}
+	}
+	subscribeContent := &group2.Subscribe{}
+	err = json.Unmarshal([]byte(g.Subscribe), subscribeContent)
+	if err != nil {
+		return err
+	}
+	subscribeContent.Tips = false
+	subscribe, err := json.Marshal(subscribeContent)
+	g.Subscribe = string(subscribe)
+	err = service.wxDao.UpdateGroup(g)
+	if err != nil {
+		return err
+	}
+	service.replyTextChan <- &reply.Reply{
+		Message: msg,
+		Content: constant.UnSubscribeMoyuTipsSuccess,
+	}
+	return nil
+}
+func (service *WxLLMService) groupSubscribeNews(msg *openwechat.Message) (bool, error) {
+	f, ok := service.SubscribeNewsMap[msg.Content]
+	if !ok {
+		return false, nil
+	}
+	err := f(msg)
+	if err != nil {
+		return true, err
+	}
+	return true, nil
+}
+
+func (service *WxLLMService) groupSubscribeTips(msg *openwechat.Message) (bool, error) {
+	f, ok := service.SubscribeTipsMap[msg.Content]
+	if !ok {
+		return false, nil
+	}
+	err := f(msg)
+	if err != nil {
+		return true, err
+	}
+	return true, nil
 }
 
 func (service *WxLLMService) redisKeyFriendDrawLotsMark(user *openwechat.User) string {

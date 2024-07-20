@@ -5,6 +5,7 @@ import (
 	r "github.com/go-redis/redis/v8"
 	"github.com/jinzhu/gorm"
 	"time"
+	"weixin_LLM/dto/group"
 	"weixin_LLM/dto/user"
 	"weixin_LLM/init/db"
 	"weixin_LLM/init/redis"
@@ -80,6 +81,29 @@ func (wd *WxDao) AddUser(user *user.User) error {
 	return nil
 }
 
+func (wd *WxDao) GetGroupByName(groupName string) (*group.Groups, error) {
+	group := &group.Groups{}
+	if err := wd.Table(group.TableName()).Where("group_name = ? and Deleted = ?", groupName, 0).Find(&group).Error; err != nil {
+		return nil, err
+	}
+	return group, nil
+}
+
+func (wd *WxDao) CreateGroup(group *group.Groups) error {
+	if err := wd.Table(group.TableName()).Create(&group).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (wd *WxDao) UpdateGroup(group *group.Groups) error {
+	if err := wd.Table(group.TableName()).Where("group_name = ? and Deleted = ?", group.GroupName, 0).Update("subscribe", group.Subscribe).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+// redis
 func (wd *WxDao) Expire(key string, exp int64) (bool, error) {
 	return wd.redisClient.Expire(wd.Context, key, time.Duration(exp*1000000000)).Result()
 }
@@ -117,4 +141,13 @@ func (wd *WxDao) SetString(key string, value interface{}, exp int64) error {
 
 func (wd *WxDao) DelString(key string) (int64, error) {
 	return wd.redisClient.Del(wd.Context, key).Result()
+}
+
+func (wd *WxDao) GetGroupList() ([]*group.Groups, error) {
+	groups := make([]*group.Groups, 0)
+	group := &group.Groups{}
+	if err := wd.Table(group.TableName()).Where("Deleted = ?", 0).Find(&groups).Error; err != nil {
+		return groups, err
+	}
+	return groups, nil
 }
