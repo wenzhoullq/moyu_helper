@@ -215,11 +215,11 @@ func (service *WxCronService) SendNews() {
 	ad := common.AdMap[time.Now().Weekday()]
 	news := newsPre + ad + newsSuf
 	//发送前更新
-	err = service.self.UpdateMembersDetail()
-	if err != nil {
-		service.Log(logrus.ErrorLevel, err.Error())
-		return
-	}
+	//err = service.self.UpdateMembersDetail()
+	//if err != nil {
+	//	service.Log(logrus.ErrorLevel, err.Error())
+	//	return
+	//}
 	groups, err := service.wxDao.GetGroupList()
 	if err != nil {
 		service.Log(logrus.ErrorLevel, err)
