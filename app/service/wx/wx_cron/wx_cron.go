@@ -3,9 +3,6 @@ package wx_cron
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/eatmoreapple/openwechat"
-	"github.com/jinzhu/gorm"
-	"github.com/sirupsen/logrus"
 	"strconv"
 	"time"
 	"weixin_LLM/dao"
@@ -16,6 +13,10 @@ import (
 	"weixin_LLM/lib"
 	"weixin_LLM/lib/client"
 	"weixin_LLM/lib/constant"
+
+	"github.com/eatmoreapple/openwechat"
+	"github.com/jinzhu/gorm"
+	"github.com/sirupsen/logrus"
 )
 
 type WxCronService struct {
@@ -165,6 +166,7 @@ func (service *WxCronService) SendHolidayTips() {
 		service.Log(logrus.ErrorLevel, err)
 		return
 	}
+	//
 	groupMap := make(map[string]*group.Groups)
 	for _, v := range groups {
 		scribe := &group.Subscribe{}
@@ -180,8 +182,8 @@ func (service *WxCronService) SendHolidayTips() {
 	}
 	for _, group := range service.groups {
 		//?到底是什么name
-		if _, ok := groupMap[group.UserName]; !ok {
-			//dd
+		fmt.Println(group.NickName)
+		if _, ok := groupMap[group.NickName]; !ok {
 			continue
 		}
 		_, err = group.SendText(holidayTip)

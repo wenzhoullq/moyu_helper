@@ -3,10 +3,6 @@ package wx
 import (
 	"encoding/json"
 	"errors"
-	"github.com/eatmoreapple/openwechat"
-	"github.com/jinzhu/gorm"
-	"github.com/robfig/cron"
-	"github.com/sirupsen/logrus"
 	"strings"
 	"weixin_LLM/dao"
 	group2 "weixin_LLM/dto/group"
@@ -16,6 +12,11 @@ import (
 	"weixin_LLM/lib/constant"
 	"weixin_LLM/service/wx/wx_cron"
 	"weixin_LLM/service/wx/wx_llm"
+
+	"github.com/eatmoreapple/openwechat"
+	"github.com/jinzhu/gorm"
+	"github.com/robfig/cron"
+	"github.com/sirupsen/logrus"
 )
 
 type WxService struct {
@@ -29,6 +30,7 @@ type WxService struct {
 	friendSend []func(*openwechat.Message) (bool, error)
 	groups     openwechat.Groups
 	friends    openwechat.Friends
+	corn       *cron.Cron
 }
 
 func NewWxService() *WxService {
@@ -37,6 +39,7 @@ func NewWxService() *WxService {
 		Logger:    log.Logger,
 		wxDao:     dao.NewWxDao(),
 		sourceDao: dao.NewSourceDao(),
+		corn:      cron.New(),
 	}
 	ws.groupSend = []func(*openwechat.Message) (bool, error){ws.groupTextMsg, ws.groupImgMsg}
 	ws.friendSend = []func(*openwechat.Message) (bool, error){ws.friendTextMsg, ws.friendImgMsg}
@@ -256,14 +259,11 @@ func (ws *WxService) InitWxRobot() error {
 	ws.Process()
 	ws.Reply()
 	//ws.MessageUpdateUserName()
-
-	// cron功能
-	c := cron.New()
-	err = c.AddFunc(config.Config.HolidayTips, ws.SendHolidayTips)
+	err = ws.corn.AddFunc(config.Config.HolidayTips, ws.SendHolidayTips)
 	if err != nil {
 		return err
 	}
-	err = c.AddFunc(config.Config.NewsTips, ws.SendNews)
+	err = ws.corn.AddFunc(config.Config.NewsTips, ws.SendNews)
 	if err != nil {
 		return err
 	}
@@ -271,8 +271,11 @@ func (ws *WxService) InitWxRobot() error {
 	//if err != nil {
 	//	return err
 	//}
-	err = c.AddFunc(config.Config.RegularSendDailyProfit, ws.RegularSendDailyProfit)
-	c.Start()
+	err = ws.corn.AddFunc(config.Config.RegularSendDailyProfit, ws.RegularSendDailyProfit)
+	if err != nil {
+		return err
+	}
+	ws.corn.Start()
 	return nil
 }
 
